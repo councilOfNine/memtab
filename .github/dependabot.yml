@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # MemTab has no runtime dependencies, but the GitHub Actions it uses still rot —
+  # GitHub has force-failed old action majors before, and nobody watches a repo whose
+  # stated virtue is having nothing to update.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels: [ci]

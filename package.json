@@ -1,0 +1,32 @@
+{
+  "name": "memtab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Chrome extension that shows each tab's memory usage as a traffic light on its favicon.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsmiketorres/memtab.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itsmiketorres/memtab/issues"
+  },
+  "homepage": "https://github.com/itsmiketorres/memtab#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test 'test/**/*.test.js'",
+    "lint": "node scripts/lint.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "npm run lint && npm test"
+  },
+  "keywords": [
+    "chrome-extension",
+    "manifest-v3",
+    "memory",
+    "performance",
+    "favicon",
+    "devtools"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "comment": "Load order for src/shared/*.js. Single source of truth — scripts/lint.mjs asserts that manifest.json's content_scripts, the service worker's importScripts() call, options.html and popup.html all load exactly these files in exactly this order. Dependencies flow downward; nothing here may depend on a file below it.",
+  "files": [
+    "constants.js",
+    "format.js",
+    "palette.js",
+    "settings.js",
+    "levels.js",
+    "measure.js",
+    "render.js"
+  ]
+}

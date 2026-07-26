@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MemTab settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="masthead__title">
+        <img src="../icons/icon-48.png" alt="" width="32" height="32" />
+        <div>
+          <h1>MemTab</h1>
+          <p class="masthead__sub">Tab memory, at a glance.</p>
+        </div>
+      </div>
+
+      <label class="switch" for="enabled">
+        <input type="checkbox" id="enabled" />
+        <span class="switch__track" aria-hidden="true"></span>
+        <span class="switch__label">Enabled</span>
+      </label>
+    </header>
+
+    <p class="notice" id="measurement-note">
+      MemTab reads <code>performance.memory</code>, which reports the
+      <strong>JavaScript heap of the renderer process</strong> serving a site — not the tab's total
+      memory, which is typically two to four times larger.
+      <a href="#about">What this means &rarr;</a>
+    </p>
+
+    <main>
+      <!-- ── Thresholds ─────────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="thresholds-heading">
+        <div class="card__head">
+          <h2 id="thresholds-heading">Thresholds</h2>
+          <div class="segmented" role="radiogroup" aria-label="Threshold units">
+            <label>
+              <input type="radio" name="thresholdMode" value="absolute" />
+              <span>Megabytes</span>
+            </label>
+            <label>
+              <input type="radio" name="thresholdMode" value="relative" />
+              <span>% of heap limit</span>
+            </label>
+          </div>
+        </div>
+
+        <p class="card__hint" id="threshold-hint"></p>
+
+        <!-- The dual-handle range widget. Track segments are coloured live from the
+             user's palette so the control itself is the legend. -->
+        <div
+          class="range"
+          id="range"
+          data-testid="threshold-range"
+        >
+          <div class="range__track">
+            <div class="range__seg range__seg--ok" data-seg="ok"></div>
+            <div class="range__seg range__seg--warn" data-seg="warn"></div>
+            <div class="range__seg range__seg--high" data-seg="high"></div>
+          </div>
+
+          <div class="range__ticks" id="range-ticks" aria-hidden="true"></div>
+
+          <button
+            type="button"
+            class="range__handle"
+            id="handle-warn"
+            role="slider"
+            aria-label="Warning threshold"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-valuetext=""
+          ></button>
+
+          <button
+            type="button"
+            class="range__handle"
+            id="handle-high"
+            role="slider"
+            aria-label="High threshold"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-valuetext=""
+          ></button>
+        </div>
+
+        <div class="thresholds">
+          <div class="thresholds__row">
+            <span class="dot" data-swatch="ok"></span>
+            <span class="thresholds__name">Healthy</span>
+            <span class="thresholds__range" id="label-ok">—</span>
+          </div>
+
+          <div class="thresholds__row">
+            <span class="dot" data-swatch="warn"></span>
+            <label class="thresholds__name" for="input-warn">Warning above</label>
+            <span class="numfield">
+              <input type="number" id="input-warn" min="1" step="1" />
+              <span class="numfield__unit" data-unit>MB</span>
+            </span>
+          </div>
+
+          <div class="thresholds__row">
+            <span class="dot" data-swatch="high"></span>
+            <label class="thresholds__name" for="input-high">High above</label>
+            <span class="numfield">
+              <input type="number" id="input-high" min="1" step="1" />
+              <span class="numfield__unit" data-unit>MB</span>
+            </span>
+          </div>
+        </div>
+
+        <p class="card__foot" id="device-note"></p>
+      </section>
+
+      <!-- ── Colours ────────────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="colors-heading">
+        <div class="card__head">
+          <h2 id="colors-heading">Colours</h2>
+          <div class="presets" id="presets" role="group" aria-label="Colour presets"></div>
+        </div>
+
+        <p class="card__hint" id="preset-note"></p>
+
+        <div class="colors" id="colors">
+          <div class="color" data-level="ok">
+            <label for="color-ok">Healthy</label>
+            <div class="color__controls">
+              <input type="color" id="color-ok" aria-label="Healthy colour" />
+              <input
+                type="text"
+                id="hex-ok"
+                class="hex"
+                spellcheck="false"
+                maxlength="7"
+                aria-label="Healthy colour hex value"
+              />
+            </div>
+          </div>
+
+          <div class="color" data-level="warn">
+            <label for="color-warn">Warning</label>
+            <div class="color__controls">
+              <input type="color" id="color-warn" aria-label="Warning colour" />
+              <input
+                type="text"
+                id="hex-warn"
+                class="hex"
+                spellcheck="false"
+                maxlength="7"
+                aria-label="Warning colour hex value"
+              />
+            </div>
+          </div>
+
+          <div class="color" data-level="high">
+            <label for="color-high">High</label>
+            <div class="color__controls">
+              <input type="color" id="color-high" aria-label="High colour" />
+              <input
+                type="text"
+                id="hex-high"
+                class="hex"
+                spellcheck="false"
+                maxlength="7"
+                aria-label="High colour hex value"
+              />
+            </div>
+          </div>
+        </div>
+
+        <p class="card__foot warn-text" id="contrast-warning" hidden></p>
+      </section>
+
+      <!-- ── Style + preview ────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="style-heading">
+        <div class="card__head">
+          <h2 id="style-heading">Indicator style</h2>
+        </div>
+
+        <div class="styles" id="styles" role="radiogroup" aria-label="Indicator style"></div>
+
+        <h3 class="subhead">Preview</h3>
+        <p class="card__hint">
+          Shown at the size Chrome actually paints in the tab strip (16&nbsp;px), and enlarged.
+          The tab strip follows your browser theme, so both are shown.
+        </p>
+
+        <div class="previews">
+          <div class="preview preview--light">
+            <span class="preview__label">Light</span>
+            <div class="tabstrip" id="strip-light"></div>
+          </div>
+          <div class="preview preview--dark">
+            <span class="preview__label">Dark</span>
+            <div class="tabstrip" id="strip-dark"></div>
+          </div>
+        </div>
+
+        <div class="zooms" id="zooms"></div>
+
+        <div class="preview-source">
+          <label for="sample">Preview against</label>
+          <select id="sample">
+            <option value="letter">A letter favicon</option>
+            <option value="photo">A colourful favicon</option>
+            <option value="mono">A dark monochrome favicon</option>
+            <option value="none">No favicon (monogram fallback)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- ── Behaviour ──────────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="behaviour-heading">
+        <div class="card__head">
+          <h2 id="behaviour-heading">Behaviour</h2>
+        </div>
+
+        <div class="rows">
+          <div class="row">
+            <label for="pollInterval">Check every</label>
+            <span class="numfield">
+              <input type="number" id="pollInterval" min="1" max="300" step="1" />
+              <span class="numfield__unit">seconds</span>
+            </span>
+            <p class="row__hint">
+              While the tab is in the foreground. Anything under a second is refused — a tight
+              poll costs more than it measures, and marks the tab as CPU-intensive, which makes
+              Chrome more likely to freeze it.
+            </p>
+          </div>
+
+          <div class="row">
+            <label for="hiddenPollInterval">Check backgrounded tabs every</label>
+            <span class="numfield">
+              <input type="number" id="hiddenPollInterval" min="1" max="300" step="1" />
+              <span class="numfield__unit">seconds</span>
+            </span>
+            <p class="row__hint">
+              Chrome throttles hidden tabs to roughly one timer fire per minute after five
+              minutes, so lower values here have little effect.
+            </p>
+          </div>
+
+          <div class="row">
+            <label for="hysteresis">Hysteresis</label>
+            <span class="numfield">
+              <input type="number" id="hysteresis" min="0" max="50" step="1" />
+              <span class="numfield__unit">%</span>
+            </span>
+            <p class="row__hint">
+              How far a reading must fall back below a threshold before the colour drops again.
+              Stops a tab hovering on a boundary from flickering.
+            </p>
+          </div>
+
+          <label class="check">
+            <input type="checkbox" id="showOk" />
+            <span>
+              Also mark healthy tabs
+              <small>Off by default — an indicator on all 40 tabs is just noise.</small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="badgeFallback" />
+            <span>
+              Show a corner badge when a site blocks favicon changes
+              <small>
+                Some sites' Content-Security-Policy forbids generated favicons. On those pages
+                MemTab can show a small dot in the corner of the page instead.
+              </small>
+            </span>
+          </label>
+
+          <label class="check">
+            <input type="checkbox" id="verbose" />
+            <span>
+              Verbose logging
+              <small>Logs <code>[memtab]</code> lines to the page console. Useful for bug reports.</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <!-- ── Per-site ───────────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="sites-heading">
+        <div class="card__head">
+          <h2 id="sites-heading">Sites to skip</h2>
+        </div>
+        <p class="card__hint">
+          MemTab leaves these origins completely alone — no measuring, no favicon changes.
+        </p>
+
+        <form class="addsite" id="addsite">
+          <input
+            type="url"
+            id="origin-input"
+            placeholder="https://example.com"
+            aria-label="Origin to skip"
+          />
+          <button type="submit" class="btn">Add</button>
+        </form>
+
+        <ul class="sites" id="sites"></ul>
+      </section>
+
+      <!-- ── Backup ─────────────────────────────────────────────────── -->
+      <section class="card" aria-labelledby="backup-heading">
+        <div class="card__head">
+          <h2 id="backup-heading">Backup and reset</h2>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="export">Export settings</button>
+          <button type="button" class="btn" id="import">Import settings</button>
+          <button type="button" class="btn btn--danger" id="reset">Reset to defaults</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden />
+        </div>
+        <p class="card__hint">
+          Imported files are validated: unknown keys are dropped, colours must be hex, and
+          out-of-range numbers are clamped.
+        </p>
+      </section>
+
+      <!-- ── About ──────────────────────────────────────────────────── -->
+      <section class="card card--about" id="about" aria-labelledby="about-heading">
+        <div class="card__head">
+          <h2 id="about-heading">What MemTab measures</h2>
+        </div>
+
+        <p>
+          The only per-page memory figure a Chrome extension can read on the stable channel is
+          <code>performance.memory</code>. It reports the V8 JavaScript heap for the
+          <em>renderer process</em> serving the page. Three consequences worth knowing:
+        </p>
+
+        <ul class="prose-list">
+          <li>
+            <strong>It is not the tab's total memory.</strong> It excludes the DOM, images,
+            decoded bitmaps, canvas and the compositor — usually most of what a tab really costs.
+            Chrome's own Task Manager (<kbd>Shift</kbd>+<kbd>Esc</kbd>) shows the real figure.
+          </li>
+          <li>
+            <strong>Tabs on the same site share it.</strong> Chrome puts same-site tabs in one
+            renderer process, and they share one JavaScript heap — so ten GitHub tabs will all
+            show the same reading, and all turn red together if one of them leaks.
+          </li>
+          <li>
+            <strong>Background tabs update slowly.</strong> Chrome throttles hidden tabs to about
+            one timer fire per minute, and may freeze or discard them entirely. A background tab's
+            colour can be minutes old.
+          </li>
+        </ul>
+
+        <p>
+          MemTab is most useful as a leak detector for the tab you are actually on: watch it walk
+          from healthy to high over a session and you have found something. It is not a substitute
+          for the Task Manager when triaging which of forty tabs to close.
+        </p>
+
+        <p class="links">
+          <a href="https://github.com/itsmiketorres/memtab" target="_blank" rel="noopener">Source</a>
+          <a href="https://github.com/itsmiketorres/memtab/blob/main/docs/TROUBLESHOOTING.md" target="_blank" rel="noopener">Troubleshooting</a>
+          <a href="https://github.com/itsmiketorres/memtab/issues" target="_blank" rel="noopener">Report a bug</a>
+        </p>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/format.js"></script>
+    <script src="../shared/palette.js"></script>
+    <script src="../shared/settings.js"></script>
+    <script src="../shared/levels.js"></script>
+    <script src="../shared/measure.js"></script>
+    <script src="../shared/render.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

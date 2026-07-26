@@ -1,0 +1,57 @@
+/*
+ * Fallback indicator for pages whose Content-Security-Policy blocks `data:` images,
+ * which means the favicon cannot be overridden at all.
+ *
+ * Injected as an extension stylesheet, so the page's CSP does not apply to it. The
+ * colour arrives via a CSS custom property set through CSSOM, which CSP also does not
+ * govern — that is the whole reason this route works when the favicon one doesn't.
+ */
+
+.memtab-badge {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2147483647;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--memtab-color, #94a3b8);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.9),
+    0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Level is encoded by size as well as colour, so it stays readable without colour
+   perception — the same reasoning behind the Bar favicon style. */
+.memtab-badge[data-level='warn'] {
+  width: 14px;
+  height: 14px;
+}
+
+.memtab-badge[data-level='high'] {
+  width: 16px;
+  height: 16px;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .memtab-badge[data-level='high'] {
+    animation: memtab-badge-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes memtab-badge-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.9),
+      0 1px 4px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, 0.9),
+      0 0 8px 2px var(--memtab-color, #94a3b8);
+  }
+}

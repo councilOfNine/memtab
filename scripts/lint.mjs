@@ -1,0 +1,300 @@
+#!/usr/bin/env node
+/**
+ * Project-specific checks that a general-purpose linter can't know about.
+ *
+ * The load-bearing one is `sharedLoadOrder`. MemTab has no bundler, so the list of
+ * files in src/shared/ is repeated in four places: the manifest's content_scripts,
+ * the service worker's importScripts() call, options.html, and popup.html. Forgetting
+ * one produces a ReferenceError on exactly one surface, and nothing else in the
+ * project would catch it. That check is the price of the no-bundler layout.
+ *
+ *   node scripts/lint.mjs
+ */
+
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join, dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const SRC = join(ROOT, 'src');
+
+const problems = [];
+const checked = [];
+
+function fail(check, message) {
+  problems.push(`${check}: ${message}`);
+}
+
+function pass(check, detail) {
+  checked.push(`${check}${detail ? ` — ${detail}` : ''}`);
+}
+
+function read(...parts) {
+  return readFileSync(join(ROOT, ...parts), 'utf8');
+}
+
+function json(...parts) {
+  return JSON.parse(read(...parts));
+}
+
+// ── shared module load order ────────────────────────────────────────────────
+
+function sharedLoadOrder() {
+  const check = 'shared load order';
+  const order = json('src', 'shared', '_order.json').files;
+
+  const onDisk = readdirSync(join(SRC, 'shared'))
+    .filter((f) => f.endsWith('.js'))
+    .sort();
+  const declared = [...order].sort();
+  if (onDisk.join() !== declared.join()) {
+    fail(
+      check,
+      `src/shared/_order.json lists [${declared.join(', ')}] but the directory contains [${onDisk.join(', ')}]`
+    );
+    return;
+  }
+
+  // constants.js re-declares the list for the service worker's runtime injection.
+  // Compare the WHOLE list, not a prefix — a trailing extra entry would otherwise be
+  // sliced away and pass, and that list is what executeScript() injects.
+  const constantsSrc = read('src', 'shared', 'constants.js');
+  const runtimeList = [...constantsSrc.matchAll(/'([a-z-]+\.js)'/g)].map((m) => m[1]);
+  if (runtimeList.length !== order.length || runtimeList.join() !== order.join()) {
+    fail(
+      check,
+      `constants.SHARED_FILES is [${runtimeList.join(', ')}] but _order.json says [${order.join(', ')}]`
+    );
+  }
+
+  const manifest = json('src', 'manifest.json');
+  const contentJs = manifest.content_scripts[0].js;
+  const expectedContent = [...order.map((f) => `shared/${f}`), 'content/content.js'];
+  if (contentJs.join() !== expectedContent.join()) {
+    fail(check, `manifest content_scripts.js is [${contentJs.join(', ')}], expected [${expectedContent.join(', ')}]`);
+  }
+
+  const worker = read('src', 'background', 'service-worker.js');
+  const imported = [...worker.matchAll(/'\.\.\/shared\/([a-z-]+\.js)'/g)].map((m) => m[1]);
+  if (imported.join() !== order.join()) {
+    fail(check, `service worker importScripts() is [${imported.join(', ')}], expected [${order.join(', ')}]`);
+  }
+
+  for (const page of ['options/options.html', 'popup/popup.html']) {
+    const html = read('src', ...page.split('/'));
+    const tags = [...html.matchAll(/<script src="\.\.\/shared\/([a-z-]+\.js)"><\/script>/g)].map((m) => m[1]);
+    if (tags.join() !== order.join()) {
+      fail(check, `${page} loads [${tags.join(', ')}], expected [${order.join(', ')}]`);
+    }
+  }
+
+  pass(check, `${order.length} files consistent across 5 load sites`);
+}
+
+// ── CommonJS export guards ──────────────────────────────────────────────────
+
+function moduleExportGuards() {
+  const check = 'module.exports guards';
+  // `module` is undefined in a content script, a classic service worker, and an
+  // extension page. An unguarded `module.exports = x` at the bottom of a shared file
+  // throws at evaluation and takes the whole surface down with it.
+  for (const file of readdirSync(join(SRC, 'shared')).filter((f) => f.endsWith('.js'))) {
+    const source = read('src', 'shared', file);
+    for (const line of source.split('\n')) {
+      if (!line.includes('module.exports')) continue;
+      if (!/typeof module !== 'undefined' && module\.exports/.test(line)) {
+        fail(check, `src/shared/${file} has an unguarded module.exports: ${line.trim()}`);
+      }
+    }
+  }
+  pass(check);
+}
+
+// ── manifest sanity ─────────────────────────────────────────────────────────
+
+function manifestPathsExist() {
+  const check = 'manifest paths';
+  const manifest = json('src', 'manifest.json');
+  const paths = new Set();
+
+  const collectIcons = (icons) => {
+    if (icons) for (const value of Object.values(icons)) paths.add(value);
+  };
+
+  collectIcons(manifest.icons);
+  collectIcons(manifest.action && manifest.action.default_icon);
+  if (manifest.action && manifest.action.default_popup) paths.add(manifest.action.default_popup);
+  if (manifest.options_ui && manifest.options_ui.page) paths.add(manifest.options_ui.page);
+  if (manifest.background && manifest.background.service_worker) {
+    paths.add(manifest.background.service_worker);
+  }
+  for (const entry of manifest.content_scripts || []) {
+    for (const file of [...(entry.js || []), ...(entry.css || [])]) paths.add(file);
+  }
+  for (const entry of manifest.web_accessible_resources || []) {
+    for (const file of entry.resources || []) {
+      if (!file.includes('*')) paths.add(file);
+    }
+  }
+
+  for (const path of paths) {
+    if (!existsSync(join(SRC, path))) fail(check, `manifest references src/${path}, which does not exist`);
+  }
+
+  pass(check, `${paths.size} referenced files present`);
+}
+
+function manifestShape() {
+  const check = 'manifest shape';
+  const manifest = json('src', 'manifest.json');
+
+  if (manifest.manifest_version !== 3) fail(check, 'manifest_version must be 3');
+
+  // MV2's string-array form is a hard load failure in MV3.
+  if (manifest.web_accessible_resources) {
+    for (const entry of manifest.web_accessible_resources) {
+      if (typeof entry === 'string') {
+        fail(check, 'web_accessible_resources must use the MV3 object form, not bare strings');
+      }
+      if (entry && entry.resources && entry.resources.some((r) => r.startsWith('_favicon'))) {
+        // Exposing the favicon endpoint to pages turns Chrome's favicon database into
+        // a browsing-history oracle any site could probe.
+        fail(check, '_favicon/* must never be web-accessible; use it from the service worker only');
+      }
+    }
+  }
+
+  // Extension versions are dotted integers. A semver prerelease string is rejected
+  // at load, so package.json and the manifest can only agree on plain releases.
+  if (!/^\d+(\.\d+){0,3}$/.test(manifest.version)) {
+    fail(check, `manifest version "${manifest.version}" is not a valid extension version`);
+  }
+
+  const pkg = json('package.json');
+  if (pkg.version !== manifest.version) {
+    fail(check, `package.json version ${pkg.version} != manifest version ${manifest.version}`);
+  }
+
+  const declared = new Set(manifest.permissions || []);
+  for (const unwanted of ['tabs', 'processes', 'debugger', '<all_urls>']) {
+    if (declared.has(unwanted)) {
+      fail(check, `permission "${unwanted}" is not used and should not be requested`);
+    }
+  }
+
+  pass(check, `v${manifest.version}, permissions: ${[...declared].join(', ')}`);
+}
+
+// ── guarded access to channel-gated APIs ────────────────────────────────────
+
+function guardedOptionalApis() {
+  const check = 'optional API guards';
+  // chrome.processes is Dev-channel only. A bare top-level reference throws a
+  // TypeError on stable and aborts service-worker startup entirely.
+  for (const file of walk(SRC)) {
+    if (!file.endsWith('.js')) continue;
+    const source = readFileSync(file, 'utf8');
+    if (!source.includes('chrome.processes')) continue;
+    if (!source.includes("typeof chrome.processes !== 'undefined'")) {
+      fail(check, `${relative(ROOT, file)} touches chrome.processes without a typeof guard`);
+    }
+  }
+  pass(check);
+}
+
+// ── documentation links ─────────────────────────────────────────────────────
+
+function markdownLinks() {
+  const check = 'doc links';
+  const files = walk(ROOT).filter(
+    (f) => (f.endsWith('.md') || f.endsWith('.yml')) && !f.includes('/node_modules/')
+  );
+
+  let count = 0;
+  for (const file of files) {
+    const source = readFileSync(file, 'utf8');
+
+    // Relative markdown links.
+    for (const match of source.matchAll(/\]\(([^)\s#][^)\s]*)\)/g)) {
+      const href = match[1];
+      if (/^(https?:|mailto:|#)/.test(href)) continue;
+      const target = resolve(dirname(file), href.split('#')[0]);
+      count++;
+      if (!existsSync(target)) {
+        fail(check, `${relative(ROOT, file)} links to ${href}, which does not exist`);
+      }
+    }
+
+    // github.com/.../blob/main/<path> links into our own repo.
+    for (const match of source.matchAll(
+      /https:\/\/github\.com\/itsmiketorres\/memtab\/blob\/main\/([^)\s"']+)/g
+    )) {
+      const target = join(ROOT, match[1].split('#')[0]);
+      count++;
+      if (!existsSync(target)) {
+        fail(check, `${relative(ROOT, file)} links to repo path ${match[1]}, which does not exist`);
+      }
+    }
+  }
+
+  pass(check, `${count} links resolved`);
+}
+
+// ── style ───────────────────────────────────────────────────────────────────
+
+function sourceStyle() {
+  const check = 'source style';
+  for (const file of walk(SRC)) {
+    if (!/\.(js|css|html|json)$/.test(file)) continue;
+    const source = readFileSync(file, 'utf8');
+    const name = relative(ROOT, file);
+
+    if (source.includes('\t')) fail(check, `${name} contains a tab character`);
+    if (/[ \t]+$/m.test(source)) fail(check, `${name} has trailing whitespace`);
+    if (source.length && !source.endsWith('\n')) fail(check, `${name} has no trailing newline`);
+    if (source.includes('\r\n')) fail(check, `${name} has CRLF line endings`);
+    // Two independent checks, no exemptions. Nesting them (as an earlier version did)
+    // made the console.log arm unreachable and silently excused src/shared/ entirely.
+    if (/^\s*debugger\b/m.test(source)) {
+      fail(check, `${name} contains a debugger statement`);
+    }
+    if (/^\s*console\.log\b/m.test(source)) {
+      // Diagnostics belong behind the verbose setting, via the content script's log()
+      // helper. A bare console.log at the start of a line is leftover debugging.
+      fail(check, `${name} has a bare console.log — use log() behind the verbose setting`);
+    }
+  }
+  pass(check);
+}
+
+// ── helpers ─────────────────────────────────────────────────────────────────
+
+function walk(dir, out = []) {
+  for (const entry of readdirSync(dir)) {
+    if (entry === 'node_modules' || entry === '.git' || entry === 'dist') continue;
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) walk(full, out);
+    else out.push(full);
+  }
+  return out;
+}
+
+// ── run ─────────────────────────────────────────────────────────────────────
+
+sharedLoadOrder();
+moduleExportGuards();
+manifestPathsExist();
+manifestShape();
+guardedOptionalApis();
+markdownLinks();
+sourceStyle();
+
+for (const line of checked) console.log(`  ok  ${line}`);
+
+if (problems.length) {
+  console.error(`\n${problems.length} problem${problems.length === 1 ? '' : 's'}:\n`);
+  for (const problem of problems) console.error(`  ✗  ${problem}`);
+  process.exit(1);
+}
+
+console.log('\nlint clean');

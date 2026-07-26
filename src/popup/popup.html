@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="wrap" id="wrap">
+      <header class="head">
+        <span class="dot" id="dot" aria-hidden="true"></span>
+        <div class="head__text">
+          <strong id="host">…</strong>
+          <span id="level-label">Reading…</span>
+        </div>
+      </header>
+
+      <div class="figure" id="figure" hidden>
+        <div class="figure__value">
+          <span id="used">—</span>
+          <small id="ratio"></small>
+        </div>
+        <div class="meter" id="meter" aria-hidden="true">
+          <div class="meter__fill" id="meter-fill"></div>
+          <div class="meter__mark" id="mark-warn"></div>
+          <div class="meter__mark" id="mark-high"></div>
+        </div>
+        <div class="figure__scale">
+          <span id="scale-min">0</span>
+          <span id="scale-max"></span>
+        </div>
+      </div>
+
+      <p class="state" id="state" hidden></p>
+
+      <ul class="notes" id="notes"></ul>
+
+      <footer class="foot">
+        <label class="skip" id="skip-wrap" hidden>
+          <input type="checkbox" id="skip" />
+          <span>Skip this site</span>
+        </label>
+        <button type="button" class="btn" id="open-options">Settings</button>
+      </footer>
+    </div>
+
+    <script src="../shared/constants.js"></script>
+    <script src="../shared/format.js"></script>
+    <script src="../shared/palette.js"></script>
+    <script src="../shared/settings.js"></script>
+    <script src="../shared/levels.js"></script>
+    <script src="../shared/measure.js"></script>
+    <script src="../shared/render.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
