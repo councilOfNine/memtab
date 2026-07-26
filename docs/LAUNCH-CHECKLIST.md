@@ -12,7 +12,7 @@ For the reasoning behind any of this, see [ROADMAP.md](ROADMAP.md).
 
 ## Blockers
 
-### 1. Get the site live at memtab.fixit.works
+### 1. ~~Get the site live at memtab.fixit.works~~ ✅ DONE
 
 The domain is chosen and everything in the repo points at it — canonical, `og:url`,
 sitemap, and the `routes` entry in [`wrangler.jsonc`](../wrangler.jsonc). The privacy

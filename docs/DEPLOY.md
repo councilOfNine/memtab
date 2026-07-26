@@ -159,19 +159,37 @@ Two things to remember:
   asset requests into billable Workers requests, which is the opposite of what you want
   for a marketing page.
 
-## Before launch
+## Live
 
-The domain is **memtab.fixit.works**, and everything in the repo already points at it: the
-canonical, `og:url`, the sitemap, and the `routes` entry in
-[`wrangler.jsonc`](../wrangler.jsonc).
+The site is deployed at **https://memtab.fixit.works**, with the privacy policy at
+**https://memtab.fixit.works/privacy** — that is the URL to give both stores, rather than a
+GitHub blob URL that breaks if the repo is ever renamed.
 
-One thing is left, and it is not a repo change: **`fixit.works` has to be a zone on your
-Cloudflare account.** Workers custom domains cannot attach to a zone you don't own there.
-Once it is, `npm run deploy:site` publishes and Cloudflare creates the DNS record and
-certificate itself.
+`/privacy` is a flat `privacy.html` rather than `privacy/index.html` on purpose. With
+`html_handling: "auto-trailing-slash"`, a directory index serves at `/privacy/` and
+`/privacy` 307s to it — fine for a browser, needlessly indirect for a URL you hand to a
+store listing and cannot easily change later.
 
-The privacy policy is served at `https://memtab.fixit.works/privacy` — that is the URL to give both
-stores, rather than a GitHub blob URL that breaks if the repo is ever renamed.
+## Cloudflare injects JavaScript unless you stop it
+
+Worth checking after any deploy, because it silently contradicts the site's whole pitch.
+
+With **Bot Fight Mode** (or JS Detections) enabled on the zone, Cloudflare appends its own
+`/cdn-cgi/challenge-platform/` script into every HTML response. On this site that means:
+
+- ~940 bytes of JavaScript added to a page that ships **none**
+- The site's own `script-src 'none'` then **blocks it**, so it never executes — verified
+  live: the script tag is in the DOM and `window.__CF$cv$params` is undefined
+- So the bot detection isn't working here either, while every visitor pays for the bytes
+  and a CSP violation
+
+Turn it off under **Security → Bots → Bot Fight Mode** for the zone. To confirm:
+
+```bash
+curl -sS https://memtab.fixit.works/ | grep -c challenge-platform
+```
+
+`0` means clean. Anything else means the injection is back.
 
 ## Updating the social card
 
