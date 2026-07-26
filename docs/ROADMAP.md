@@ -6,7 +6,8 @@ does each part.
 **Legend** — ✅ done · 🤖 automated (a command does it) · 👤 needs a person
 
 Run `npm run preflight` at any point: it executes every mechanical check and prints what
-is still waiting on you.
+is still waiting on you. The human items are tracked as a tickable list in
+[LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md).
 
 ---
 

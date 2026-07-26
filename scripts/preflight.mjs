@@ -141,7 +141,8 @@ for (const item of HUMAN) {
   console.log(`    ${dim(item.doc)}`);
 }
 
-console.log(`\n${bold('Roadmap')}  docs/ROADMAP.md\n`);
+console.log(`\n${bold('Roadmap')}    docs/ROADMAP.md`);
+console.log(`${bold('Checklist')}  docs/LAUNCH-CHECKLIST.md\n`);
 
 if (failed) {
   console.log(red(`${failed} mechanical check${failed === 1 ? '' : 's'} failed.\n`));

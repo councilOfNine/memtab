@@ -150,8 +150,9 @@ including custom domains and the one case where you'd want Pages instead.
 ## Publishing
 
 **[docs/ROADMAP.md](docs/ROADMAP.md)** is the plan for getting live: which stores are
-worth shipping to, what's already automated, and what needs a person. `npm run preflight`
-runs every mechanical check and prints the rest.
+worth shipping to, what's already automated, and what needs a person.
+**[docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md)** is the tickable version of the
+human half. `npm run preflight` runs every mechanical check and prints the rest.
 
 [docs/PUBLISHING.md](docs/PUBLISHING.md) is the step-by-step for the Chrome Web Store and
 Edge Add-ons: account setup, exact asset sizes, what gets extensions rejected, and the
