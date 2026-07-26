@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab screenshot 1 — the idea</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Store screenshot 1 of 5. Exactly 1280x800. Leads with what the user sees. -->
+    <div class="frame frame--shot">
+      <div class="eyebrow">
+        <img src="icons/icon-32.png" alt="" width="20" height="20" />
+        MemTab
+      </div>
+
+      <h1 style="margin-top: 18px">Your tabs tell you<br />when they get heavy.</h1>
+      <p class="sub">
+        A coloured ring around each tab's own favicon — not instead of it. Green while a tab is
+        healthy, amber as it grows, red when it needs attention.
+      </p>
+
+      <div class="strip" style="margin-top: 52px">
+        <div class="strip__row strip__row--fill">
+          <div class="tab tab--muted">
+            <canvas data-icon="ok:ring:D"></canvas>
+            <span>Docs — spec draft</span>
+          </div>
+          <div class="tab tab--muted">
+            <canvas data-icon="ok:ring:G"></canvas>
+            <span>Mail</span>
+          </div>
+          <div class="tab">
+            <canvas data-icon="warn:ring:A"></canvas>
+            <span>Analytics dashboard</span>
+          </div>
+          <div class="tab">
+            <canvas data-icon="high:ring:E"></canvas>
+            <span>Design editor</span>
+          </div>
+        </div>
+        <div class="strip__body"></div>
+      </div>
+
+      <div class="bullets">
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #22c55e"></span>
+          <span><strong>Healthy</strong> — below your warning threshold</span>
+        </div>
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #f59e0b"></span>
+          <span><strong>Warning</strong> — climbing, worth an eye</span>
+        </div>
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #ef4444"></span>
+          <span><strong>High</strong> — past the limit you set</span>
+        </div>
+      </div>
+    </div>
+
+    <script src="shared/constants.js"></script>
+    <script src="shared/format.js"></script>
+    <script src="shared/palette.js"></script>
+    <script src="shared/settings.js"></script>
+    <script src="shared/levels.js"></script>
+    <script src="shared/measure.js"></script>
+    <script src="shared/render.js"></script>
+    <script src="frames.js"></script>
+  </body>
+</html>

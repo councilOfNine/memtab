@@ -1,0 +1,12 @@
+MemTab has one purpose: to show the current JavaScript memory usage of each open tab as a
+colour-coded indicator drawn onto that tab's favicon, so a user can see at a glance which
+tab is consuming memory.
+
+Everything in the extension serves that purpose. The content script reads the page's
+memory figure and composites the indicator onto the favicon. The options page lets the
+user choose the thresholds at which the colour changes, the colours themselves, and the
+indicator style. The popup shows the current tab's reading and explains why the indicator
+is unavailable on pages where extensions cannot run.
+
+MemTab does not manage, group, suspend or close tabs, does not modify page content, and
+does not provide any feature unrelated to displaying memory usage.

@@ -9,6 +9,28 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ## [Unreleased]
 
+### Added
+
+- **Marketing site** in [`site/`](site) — a static page with an interactive demo that
+  runs the extension's real renderer rather than a mock-up, so it can't drift from the
+  product. `npm run build:site`, deployed to Cloudflare Workers Static Assets via
+  [`wrangler.jsonc`](wrangler.jsonc). See [docs/DEPLOY.md](docs/DEPLOY.md).
+- **Chrome Web Store listing kit** in [`store/`](store): pre-written description,
+  single-purpose statement and per-permission justifications, plus
+  `npm run store-assets`, which renders the five screenshots, both promo tiles and the
+  social card at exact store dimensions with headless Chrome. Two of the screenshots
+  embed the live options page and popup, so they update with the UI.
+- **[docs/PUBLISHING.md](docs/PUBLISHING.md)** — the full submission playbook, verified
+  against the live Chrome Web Store docs in July 2026.
+- Lint now covers the store listing (name and summary length limits, and that every
+  requested permission has a written justification) and the site's CSP invariants (no
+  inline styles or scripts, which the shipped `Content-Security-Policy` would block).
+
+### Changed
+
+- Manifest description reworded to lead with the benefit; it doubles as the Web Store
+  summary, and lint now enforces the 132-character limit.
+
 ## [0.1.0] — 2026-07-26
 
 First real release. The project up to this point was three proof-of-concept prototypes,

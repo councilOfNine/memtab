@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "MemTab",
   "version": "0.1.0",
-  "description": "Shows each tab's JavaScript memory usage as a colour on its favicon. Configurable thresholds and colours.",
+  "description": "See each tab's JavaScript memory usage as a colour on its favicon. Set your own thresholds and colours.",
   "minimum_chrome_version": "110",
 
   "icons": {
