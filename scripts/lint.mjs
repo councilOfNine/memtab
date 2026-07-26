@@ -254,21 +254,30 @@ function siteCsp() {
     if (/<style[\s>]/.test(source)) {
       fail(check, `${name} has an inline <style> block, which the site's CSP blocks`);
     }
-    if (/<script(?![^>]*\ssrc=)[^>]*>/.test(source)) {
-      fail(check, `${name} has an inline <script>, which the site's CSP blocks`);
+    // Not just inline scripts: the site ships `script-src 'none'` and is meant to have
+    // no JavaScript at all, so any <script> is a defect rather than a CSP question.
+    if (/<script[\s>]/.test(source)) {
+      fail(check, `${name} has a <script>; the site ships script-src 'none' and no JavaScript`);
     }
   }
 
-  // The page loads the extension's shared modules; they must match _order.json or the
-  // demo dies with a ReferenceError.
-  const order = json('src', 'shared', '_order.json').files;
-  const html = read('site', 'index.html');
-  const tags = [...html.matchAll(/<script src="shared\/([a-z-]+\.js)"><\/script>/g)].map((m) => m[1]);
-  if (tags.join() !== order.join()) {
-    fail(check, `site/index.html loads [${tags.join(', ')}], expected [${order.join(', ')}]`);
+  if (walk(siteDir).some((f) => f.endsWith('.js'))) {
+    fail(check, 'site/ contains a .js file; this site is meant to ship no JavaScript');
   }
 
-  pass(check, 'no inline styles or scripts; shared modules match');
+  // The generated pickers depend on these markers surviving edits to the sources.
+  const markers = [
+    ['site/index.html', ['<!--@symbols-->', '<!--@style-radios-->', '<!--@palette-radios-->', '<!--@strips-light-->', '<!--@strips-dark-->']],
+    ['site/styles.css', ['/*@generated-pickers*/']],
+  ];
+  for (const [file, needed] of markers) {
+    const source = read(...file.split('/'));
+    for (const marker of needed) {
+      if (!source.includes(marker)) fail(check, `${file} is missing the ${marker} injection point`);
+    }
+  }
+
+  pass(check, 'no scripts, no inline styles, injection points intact');
 }
 
 // ── guarded access to channel-gated APIs ────────────────────────────────────

@@ -20,7 +20,17 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = join(ROOT, 'src', 'icons');
+const SITE_DIR = join(ROOT, 'site');
+
+/** Sizes Chrome's manifest asks for. Only these ship inside the extension. */
 const SIZES = [16, 32, 48, 128];
+
+/**
+ * iOS home-screen icon for the website. 180px is what Safari wants, and it cannot be
+ * an SVG — so it is generated here but written to site/ rather than into the extension
+ * package, which has no use for it.
+ */
+const APPLE_TOUCH_SIZE = 180;
 const SS = 4; // supersampling factor per axis
 
 // The mark: a segmented traffic-light ring (the indicator) wrapped around a rounded
@@ -179,9 +189,75 @@ function encodePng(size, pixels) {
 
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// SVG, from the same constants as the bitmaps
+// ---------------------------------------------------------------------------
+
+/**
+ * The mark as vector.
+ *
+ * Chrome's manifest only takes bitmaps, so the PNGs above are what the extension
+ * ships — but the website wants the same mark, and at ~700 bytes the SVG replaces
+ * four PNGs with one file that stays sharp at any size.
+ *
+ * Authored from the same constants as `render()` so the two cannot drift.
+ */
+function buildSvg() {
+  const S = 32; // viewBox units; the shape is resolution-independent from here
+  const c = S / 2;
+  const ringRadius = ((RING_OUTER + RING_INNER) / 2) * S;
+  const ringWidth = (RING_OUTER - RING_INNER) * S;
+  const half = GAP_DEG / 2;
+
+  // SVG's y axis points down, so a point at angle a (measured the way render() does,
+  // counter-clockwise from east) is (cos a, -sin a). Sweeping counter-clockwise on
+  // screen therefore means sweep-flag 0.
+  const point = (deg) => {
+    const rad = (deg * Math.PI) / 180;
+    const x = c + ringRadius * Math.cos(rad);
+    const y = c - ringRadius * Math.sin(rad);
+    return `${Math.round(x * 1000) / 1000} ${Math.round(y * 1000) / 1000}`;
+  };
+
+  const arcs = SEGMENTS.map((seg) => {
+    const from = seg.from + half;
+    const to = seg.to - half;
+    const large = to - from > 180 ? 1 : 0;
+    const hex = '#' + seg.color.map((v) => v.toString(16).padStart(2, '0')).join('');
+    return (
+      `<path d="M ${point(from)} A ${ringRadius} ${ringRadius} 0 ${large} 0 ${point(to)}" ` +
+      `fill="none" stroke="${hex}" stroke-width="${Math.round(ringWidth * 1000) / 1000}"/>`
+    );
+  }).join('');
+
+  const round = (v) => Math.round(v * 1000) / 1000;
+  const plateSize = PLATE_HALF * 2 * S;
+  const plateHex = '#' + PLATE_COLOR.map((v) => v.toString(16).padStart(2, '0')).join('');
+  const plate =
+    `<rect x="${round(c - plateSize / 2)}" y="${round(c - plateSize / 2)}" ` +
+    `width="${round(plateSize)}" height="${round(plateSize)}" ` +
+    `rx="${round(PLATE_RADIUS * S)}" fill="${plateHex}"/>`;
+
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" role="img" ` +
+    `aria-label="MemTab">${arcs}${plate}</svg>\n`
+  );
+}
+
+// ---------------------------------------------------------------------------
+
 mkdirSync(OUT_DIR, { recursive: true });
 for (const size of SIZES) {
   const file = join(OUT_DIR, `icon-${size}.png`);
   writeFileSync(file, encodePng(size, render(size)));
   console.log(`wrote ${file}`);
 }
+
+const svgPath = join(OUT_DIR, 'icon.svg');
+writeFileSync(svgPath, buildSvg());
+console.log(`wrote ${svgPath}`);
+
+mkdirSync(SITE_DIR, { recursive: true });
+const applePath = join(SITE_DIR, 'apple-touch-icon.png');
+writeFileSync(applePath, encodePng(APPLE_TOUCH_SIZE, render(APPLE_TOUCH_SIZE)));
+console.log(`wrote ${applePath}`);

@@ -1,17 +1,58 @@
 # Deploying the marketing site
 
-The site in [`site/`](../site) is plain HTML, CSS and one script. No framework, no build
-tooling beyond a copy step, no external requests.
+The site in [`site/`](../site) is HTML and CSS. **No JavaScript at all** — not a
+framework, not a snippet, nothing. The page weighs about **7 KB** over the wire.
 
 ```bash
 npm run build:site     # -> dist/site/
 npm run deploy:site    # build, then npx wrangler deploy
 ```
 
-`scripts/build-site.mjs` copies `site/` into `dist/site/` along with the extension's
-`src/shared/*.js` modules and icons. The interactive demo on the page runs the
-extension's **real** renderer, so the site cannot show an indicator the product doesn't
-draw. The build fails if the page's `<script>` tags and `src/shared/_order.json` disagree.
+## How a static page stays interactive
+
+The style and palette pickers on the page are real `<input type="radio">` elements, and
+the CSS selects on them:
+
+```css
+.demo:has(#st-bar:checked) .variant[data-style='bar'] { display: flex }
+.demo:has(#pal-neon:checked) { --ok: #00e676; --warn: #ffea00; --high: #ff1744 }
+```
+
+Every indicator is a `<use>` of an inline `<symbol>`. The symbols are generated at build
+time by running the extension's own `render.plan()` through
+[`scripts/lib/plan-to-svg.mjs`](../scripts/lib/plan-to-svg.mjs), so the page still cannot
+advertise an indicator the product doesn't draw — the rendering just happens at build
+time instead of in a canvas at runtime.
+
+Shapes drawn in the level colour become `currentColor`, so switching palette is one CSS
+rule changing three custom properties rather than 24 redrawn images.
+
+`scripts/build-site.mjs` injects the generated markup at `<!--@symbols-->` and friends in
+`index.html`, and the generated rules at `/*@generated-pickers*/` in `styles.css`. It
+fails the build if a marker is missing, or if any `.js` file reaches `dist/site/`.
+
+## Compression
+
+**There is nothing to configure.** Cloudflare negotiates Brotli (or gzip) per request
+from `Accept-Encoding` and compresses text assets at the edge. Do not set
+`Content-Encoding` in `_headers` — that would claim an encoding the body doesn't have.
+
+`npm run build:site` prints the brotli size of every file so the number you care about is
+the one you see:
+
+```
+  9 files · 92.1 KB raw · 65.1 KB over the wire
+  first paint needs 6.7 KB brotli (8.0 KB gzip) — html + css + icon
+```
+
+Most of the remaining weight is `social-card.jpg`, which only ever leaves the server when
+a link is unfurled — the page itself never requests it.
+
+To confirm compression once deployed:
+
+```bash
+curl -sI -H 'Accept-Encoding: br' https://your-domain/ | grep -i content-encoding
+```
 
 ## Workers, not Pages
 
@@ -91,8 +132,15 @@ Dashboard → Workers & Pages → Create → **Pages** → Connect to Git, with 
 ## Headers
 
 [`site/_headers`](../site/_headers) sets the security headers and cache policy. The
-Content-Security-Policy is strict (`default-src 'none'`) because the site loads nothing
-from anywhere else and has no inline script.
+Content-Security-Policy is about as tight as one gets — `default-src 'none'` with
+`script-src 'none'` — because the site loads nothing from another origin and runs no
+JavaScript. `script-src 'none'` is the load-bearing line: if a script ever creeps in, the
+page breaks loudly rather than quietly shipping something the privacy claims don't cover.
+`npm run lint` fails on any `<script>` tag or `.js` file under `site/` for the same reason.
+
+Filenames are not content-hashed, so cache lifetimes are deliberately modest (a day for
+CSS and icons, revalidate-always for HTML). If you ever add hashing, raise them to a year
+with `immutable`.
 
 Two things to remember:
 

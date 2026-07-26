@@ -168,12 +168,26 @@ for (const frame of FRAMES) {
 cpSync(join(ROOT, 'src', 'icons', 'icon-128.png'), join(OUT, 'store-icon-128.png'));
 console.log(`  ok  ${'store-icon-128.png'.padEnd(30)} 128x128`);
 
-// The site's Open Graph image is the same asset; drop it where the site build expects it.
-cpSync(join(OUT, 'social-card-1200x630.png'), join(ROOT, 'site', 'social-card.png'));
+// The site's Open Graph image is the same picture, but re-encoded as JPEG: the PNG is
+// a 350 KB mostly-gradient bitmap and the site should not carry that. Quality 82 on a
+// 1200x630 gradient is visually identical and roughly a tenth of the size.
+const socialPng = join(OUT, 'social-card-1200x630.png');
+const socialJpg = join(ROOT, 'site', 'social-card.jpg');
+try {
+  execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '82', socialPng, '--out', socialJpg], {
+    stdio: ['ignore', 'ignore', 'pipe'],
+  });
+  const before = statSync(socialPng).size;
+  const after = statSync(socialJpg).size;
+  console.log(`  ok  ${'site/social-card.jpg'.padEnd(30)} ${(after / 1024).toFixed(0)} KB (from ${(before / 1024).toFixed(0)} KB PNG)`);
+} catch {
+  // `sips` is macOS-only. Fall back to the PNG rather than failing the whole run.
+  cpSync(socialPng, join(ROOT, 'site', 'social-card.png'));
+  console.log('  --  sips unavailable; copied the PNG social card instead of a JPEG');
+}
 
 const total = readdirSync(OUT).reduce((sum, f) => sum + statSync(join(OUT, f)).size, 0);
 console.log(`\nwrote ${relative(ROOT, OUT)}/  (${(total / 1024).toFixed(0)} KB)`);
-console.log('also  site/social-card.png');
 
 /** Read width/height straight out of the PNG IHDR, to verify the capture size. */
 function pngSize(buffer) {
