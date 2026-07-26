@@ -11,3 +11,6 @@ coverage/
 # Wrangler's local state. .wrangler/cache/wrangler-account.json holds the Cloudflare
 # account it is logged into — never commit it.
 .wrangler/
+
+# Editor/agent tooling config. `npx wrangler dev` is the documented way to preview.
+.claude/

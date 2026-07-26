@@ -1,17 +1,27 @@
 # Deploying the marketing site
 
-The site in [`site/`](../site) is HTML and CSS. **No JavaScript at all** — not a
-framework, not a snippet, nothing. The page weighs about **7 KB** over the wire.
+The site in [`site/`](../site) is HTML and CSS, plus **one inline script of about 500
+bytes** for the copy button — `navigator.clipboard` has no CSS equivalent. No framework,
+no bundler, no third-party script, and no `.js` file anywhere under `site/`. First paint
+is about **7.7 KB** over the wire.
 
 ```bash
 npm run build:site     # -> dist/site/
 npm run deploy:site    # build, then npx wrangler deploy
+npm run verify:deploy  # check what the live site actually serves
 ```
+
+Merging to `main` deploys automatically — see [Automatic deploys](#automatic-deploys).
 
 ## How a static page stays interactive
 
-The style and palette pickers on the page are real `<input type="radio">` elements, and
-the CSS selects on them:
+Almost everything interactive here is CSS. The one exception is the copy button next to
+the `git clone` command: the clipboard has no CSS API, so it needs the inline script
+described under [Headers](#headers). It ships `hidden` and the script reveals it, so a
+visitor without JavaScript gets the selectable `<pre>` rather than a dead button.
+
+The style and palette pickers are real `<input type="radio">` elements, and the CSS
+selects on them:
 
 ```css
 .demo:has(#st-bar:checked) .variant[data-style='bar'] { display: flex }
@@ -88,15 +98,46 @@ with production routing rules first:
 npx wrangler@latest dev
 ```
 
-## Continuous deploys from Git
+## Automatic deploys
 
-Dashboard → Workers & Pages → Create → **Import a repository** → pick this repo.
+Merging a PR into `main` deploys the site. That's
+[`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml): it runs
+`npm run lint && npm test`, builds, deploys with `wrangler-action`, then verifies the
+live response.
 
-| Setting | Value |
+It only fires when something that affects the site changed (`site/`, the icons, the
+shared renderer, the build script, `wrangler.jsonc`), so an extension-only or docs-only
+merge doesn't redeploy an identical page. `workflow_dispatch` covers redeploying without
+an empty commit — after a cache purge, say. Concurrency is pinned to one deploy at a
+time and queued rather than cancelled, so `main` and the live site can't disagree.
+
+### One-time setup
+
+The workflow needs two repository secrets — Settings → Secrets and variables → Actions:
+
+| Secret | Where it comes from |
 | --- | --- |
-| Build command | `npm run build:site` |
-| Deploy command | `npx wrangler deploy` (the default) |
-| Root directory | leave empty |
+| `CLOUDFLARE_API_TOKEN` | My Profile → API Tokens → Create Token → **Edit Cloudflare Workers** |
+| `CLOUDFLARE_ACCOUNT_ID` | Workers & Pages → right sidebar, or `npx wrangler whoami` |
+
+Scope the token to this account and the `fixit.works` zone. It needs Workers Scripts
+edit; a global API key works but grants far more than a deploy needs.
+
+The workflow also references a `production` environment, which GitHub creates on first
+run. Adding required reviewers to it turns every deploy into an approval gate, which is
+worth doing if the site ever carries more than marketing copy.
+
+### Why not Cloudflare's own Git integration
+
+Dashboard → Workers & Pages → Create → **Import a repository** also works, with build
+command `npm run build:site`. It's fewer moving parts and needs no secrets in GitHub.
+
+It's not what this repo uses because it deploys whatever lands on the branch — it has no
+notion of the test suite, so a commit that breaks the renderer still ships. The Actions
+workflow gates on `npm run lint && npm test` first and checks the result afterwards.
+
+**Pick one, not both.** With the Git integration connected *and* this workflow enabled,
+every merge deploys twice, and the two race.
 
 There is no "build output directory" field on Workers — that's `assets.directory` in
 `wrangler.jsonc`, already set to `./dist/site`.
@@ -132,11 +173,36 @@ Dashboard → Workers & Pages → Create → **Pages** → Connect to Git, with 
 ## Headers
 
 [`site/_headers`](../site/_headers) sets the security headers and cache policy. The
-Content-Security-Policy is about as tight as one gets — `default-src 'none'` with
-`script-src 'none'` — because the site loads nothing from another origin and runs no
-JavaScript. `script-src 'none'` is the load-bearing line: if a script ever creeps in, the
-page breaks loudly rather than quietly shipping something the privacy claims don't cover.
-`npm run lint` fails on any `<script>` tag or `.js` file under `site/` for the same reason.
+Content-Security-Policy is about as tight as one gets — `default-src 'none'`, and the
+site loads nothing from any other origin.
+
+`script-src` is the load-bearing line, and it is a **hash whitelist**, not a wildcard:
+
+```
+script-src 'sha256-D4k/lwKlijxtJ8g5x4un1ESJLJOjcFtij/tiMy2c9bY='
+```
+
+`scripts/build-site.mjs` replaces the `@script-hashes@` marker in `_headers` with a
+sha256 of every inline script it finds in the **built** HTML. That ordering matters: the
+minifier strips leading whitespace from every line, so hashing the source bytes would
+produce a policy that rejects the bytes actually shipped.
+
+The effect is that no script can run on this site unless someone rebuilt it — not an
+injected one, not an edited one, not `eval`. Change a character in the script without
+rebuilding and the browser refuses to run it, which is the failure mode you want.
+
+`npm run lint` enforces the rest: no `.js` file under `site/`, and any `<script>` with
+attributes (a `src`, a `nonce`, a `defer`) fails, since only a bare inline script can be
+pinned by a hash.
+
+Two ways this can silently break, both now checked:
+
+- The marker is only substituted if `_headers` still contains it. `replaceAll` is
+  deliberate — the marker is named in the comment above the header too, and replacing
+  just the first occurrence once rewrote the comment while shipping a literal
+  `@script-hashes@` in the real policy, which blocks the script it was meant to allow.
+- The HTML and the header are produced by different steps and can drift.
+  `npm run verify:deploy` re-hashes the live page's scripts against the live page's CSP.
 
 Filenames are not content-hashed, so cache lifetimes are deliberately modest (a day for
 CSS and icons, revalidate-always for HTML). If you ever add hashing, raise them to a year
@@ -174,22 +240,28 @@ store listing and cannot easily change later.
 
 Worth checking after any deploy, because it silently contradicts the site's whole pitch.
 
-With **Bot Fight Mode** (or JS Detections) enabled on the zone, Cloudflare appends its own
-`/cdn-cgi/challenge-platform/` script into every HTML response. On this site that means:
+With **Bot Fight Mode** (or **JS Detections**, a separate toggle on the same page)
+enabled on the zone, Cloudflare appends its own `/cdn-cgi/challenge-platform/` script
+into every HTML response. On this site that means:
 
-- ~940 bytes of JavaScript added to a page that ships **none**
-- The site's own `script-src 'none'` then **blocks it**, so it never executes — verified
-  live: the script tag is in the DOM and `window.__CF$cv$params` is undefined
+- ~940 bytes of JavaScript added to a page whose whole pitch is that it ships almost none
+- The site's own hash-whitelist `script-src` **blocks it**, so it never executes —
+  verified live: the script tag is in the DOM and `window.__CF$cv$params` is undefined
 - So the bot detection isn't working here either, while every visitor pays for the bytes
   and a CSP violation
 
-Turn it off under **Security → Bots → Bot Fight Mode** for the zone. To confirm:
+Turn both off under **Security → Bots** for the zone, then **purge the cache** — a
+redeploy alone does not evict it, and query-string cache-busting doesn't work because
+Workers Static Assets ignores query strings when matching. To confirm:
 
 ```bash
-curl -sS https://memtab.fixit.works/ | grep -c challenge-platform
+npm run verify:deploy
 ```
 
-`0` means clean. Anything else means the injection is back.
+`verify-deploy` reports the injection as a warning rather than a failure, because it is a
+zone setting this repo doesn't control and blocking deploys on it would be worse than
+shipping it. It also excludes the injected script from the hash check — otherwise every
+deploy would fail on a script that isn't ours.
 
 ## Updating the social card
 

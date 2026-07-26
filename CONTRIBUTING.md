@@ -8,7 +8,7 @@ person can read in an afternoon.
 There is no build step and no dependencies. Clone it and load it:
 
 ```bash
-git clone https://github.com/itsmiketorres/memtab.git
+git clone https://github.com/councilOfNine/memtab.git
 ```
 
 Then in Chrome:

@@ -217,7 +217,7 @@ Worth knowing which of these apply to MemTab:
 **Reviewer notes worth including:**
 
 > MemTab is unminified, unbundled source with no dependencies and no remote code; the
-> uploaded package is byte-identical to https://github.com/itsmiketorres/memtab
+> uploaded package is byte-identical to https://github.com/councilOfNine/memtab
 >
 > To see it working: install, open any ordinary https page, and **reload it** — content
 > scripts don't apply to tabs that were already open before install. The coloured ring

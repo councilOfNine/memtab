@@ -51,7 +51,7 @@ an individual is officially representing the community in public spaces.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the project maintainers by opening a confidential report through
-[GitHub's private vulnerability/abuse reporting](https://github.com/itsmiketorres/memtab/security/advisories/new)
+[GitHub's private vulnerability/abuse reporting](https://github.com/councilOfNine/memtab/security/advisories/new)
 or by contacting a maintainer directly. All complaints will be reviewed and
 investigated promptly and fairly.
 

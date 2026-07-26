@@ -6,12 +6,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/itsmiketorres/memtab.git"
+    "url": "git+https://github.com/councilOfNine/memtab.git"
   },
   "bugs": {
-    "url": "https://github.com/itsmiketorres/memtab/issues"
+    "url": "https://github.com/councilOfNine/memtab/issues"
   },
-  "homepage": "https://github.com/itsmiketorres/memtab#readme",
+  "homepage": "https://github.com/councilOfNine/memtab#readme",
   "engines": {
     "node": ">=22"
   },
@@ -21,6 +21,7 @@
     "build": "node scripts/build.mjs",
     "build:site": "node scripts/build-site.mjs",
     "deploy:site": "npm run build:site && npx wrangler@latest deploy",
+    "verify:deploy": "node scripts/verify-deploy.mjs https://memtab.fixit.works/",
     "icons": "node scripts/make-icons.mjs",
     "store-assets": "node scripts/make-store-assets.mjs",
     "check": "npm run lint && npm test",

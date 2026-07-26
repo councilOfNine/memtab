@@ -4,7 +4,7 @@
 favicon.** Green while a tab is healthy, amber when it's getting heavy, red when it's a
 problem — with thresholds and colours you set yourself.
 
-[![CI](https://github.com/itsmiketorres/memtab/actions/workflows/ci.yml/badge.svg)](https://github.com/itsmiketorres/memtab/actions/workflows/ci.yml)
+[![CI](https://github.com/councilOfNine/memtab/actions/workflows/ci.yml/badge.svg)](https://github.com/councilOfNine/memtab/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 MemTab draws the indicator *around* the site's own favicon rather than replacing it, so
@@ -18,7 +18,7 @@ live preview of exactly what the tab strip will look like.
 MemTab is not on the Chrome Web Store yet. To run it now:
 
 ```bash
-git clone https://github.com/itsmiketorres/memtab.git
+git clone https://github.com/councilOfNine/memtab.git
 ```
 
 1. Open `chrome://extensions`
@@ -138,14 +138,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) to get started and
 
 ## The website
 
-[`site/`](site) is the marketing page: HTML and CSS, **no JavaScript at all**, about 7 KB
-over the wire. The style and palette pickers are radio inputs plus `:has()`, and every
-indicator on the page is an inline SVG symbol generated at build time from the
-extension's own `render.plan()` — so the page still can't advertise an indicator the
-product doesn't draw.
+[`site/`](site) is the marketing page, live at
+[memtab.fixit.works](https://memtab.fixit.works): HTML and CSS plus **one 500-byte inline
+script** for the copy button, about 7.7 KB over the wire. No third-party JavaScript, no
+analytics, and no `.js` file anywhere under `site/`.
 
-[docs/DEPLOY.md](docs/DEPLOY.md) covers deploying it to Cloudflare Workers Static Assets,
-including custom domains and the one case where you'd want Pages instead.
+The style and palette pickers are radio inputs plus `:has()`, and every indicator on the
+page is an inline SVG symbol generated at build time from the extension's own
+`render.plan()` — so the page still can't advertise an indicator the product doesn't
+draw. `script-src` is a sha256 hash whitelist generated from the built HTML, so nothing
+runs on that page that wasn't built into it.
+
+Merging to `main` deploys it. [docs/DEPLOY.md](docs/DEPLOY.md) covers that pipeline,
+Cloudflare Workers Static Assets, custom domains, and the one case where you'd want Pages
+instead.
 
 ## Publishing
 
