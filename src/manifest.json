@@ -1,0 +1,55 @@
+{
+  "manifest_version": 3,
+  "name": "MemTab",
+  "version": "0.1.0",
+  "description": "Shows each tab's JavaScript memory usage as a colour on its favicon. Configurable thresholds and colours.",
+  "minimum_chrome_version": "110",
+
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "permissions": ["storage", "scripting", "favicon"],
+
+  "host_permissions": ["http://*/*", "https://*/*"],
+
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "shared/constants.js",
+        "shared/format.js",
+        "shared/palette.js",
+        "shared/settings.js",
+        "shared/levels.js",
+        "shared/measure.js",
+        "shared/render.js",
+        "content/content.js"
+      ],
+      "css": ["content/badge.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "MemTab",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+}

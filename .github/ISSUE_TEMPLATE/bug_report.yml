@@ -1,0 +1,75 @@
+name: Bug report
+description: Something in MemTab doesn't work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing! Two things that save everyone time:
+
+        **If the indicator doesn't appear on a site**, check
+        [docs/TROUBLESHOOTING.md](https://github.com/itsmiketorres/memtab/blob/main/docs/TROUBLESHOOTING.md)
+        first — there are pages where Chrome forbids extensions from running at all, and
+        sites whose security policy blocks generated favicons entirely. The popup names
+        the specific reason for most of these.
+
+        **If the number looks wrong**, note that MemTab reads the JavaScript heap of the
+        renderer process, not the tab's real memory. It is normally much smaller than
+        Chrome's Task Manager shows, and tabs on the same site share one reading. That's
+        a browser limitation, not a bug —
+        [the details are here](https://github.com/itsmiketorres/memtab/blob/main/docs/ARCHITECTURE.md).
+
+  - type: input
+    id: site
+    attributes:
+      label: Site
+      description: The URL (or a public URL that reproduces it). Leave blank if it's everywhere.
+      placeholder: https://example.com
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: What's broken?
+      options:
+        - The favicon indicator doesn't appear
+        - The indicator appears but the colour is wrong
+        - The indicator flickers or fights with the page
+        - The indicator is stuck / never updates
+        - The reading is impossible (0 MB, absurdly large)
+        - The options page / threshold widget
+        - The popup
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: |
+        Run `chrome://version` and paste the first two lines. If the popup showed a
+        message rather than a reading, paste that too.
+      render: text
+      placeholder: |
+        Chrome: 1xx.0.xxxx.xx (Official Build) (arm64)
+        OS: macOS 15.x
+        Popup said: "This site's security policy blocks generated favicons…"
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: |
+        Optional. Enable "Verbose logging" in MemTab's options, reload the page, and
+        paste anything prefixed with `[memtab]` from the page console and from the
+        service worker console (`chrome://extensions` → MemTab → "service worker").
+      render: text
