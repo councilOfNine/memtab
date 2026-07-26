@@ -36,7 +36,12 @@ const TEST_SETTINGS = {
   verbose: true,
 };
 
-test('extension end-to-end', { skip: chromePath ? false : 'no Chrome installed' }, async (t) => {
+// A hard ceiling so a wedged browser fails the job in minutes instead of hanging until
+// the runner's own timeout. Locally the whole suite is well under a minute.
+test(
+  'extension end-to-end',
+  { skip: chromePath ? false : 'no Chrome installed', timeout: 180000 },
+  async (t) => {
   const fixtures = await startFixtures();
   const chrome = await launchChrome({ chromePath });
 
@@ -183,4 +188,5 @@ test('extension end-to-end', { skip: chromePath ? false : 'no Chrome installed' 
     const extensionTargets = targetInfos.filter((target) => target.url.includes(id));
     assert.ok(extensionTargets.length > 0, 'no extension targets at all');
   });
-});
+  }
+);

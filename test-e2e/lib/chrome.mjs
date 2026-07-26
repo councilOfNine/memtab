@@ -103,7 +103,11 @@ export async function launchChrome({ chromePath = findChrome() } = {}) {
     throw error;
   }
 
-  const version = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+  // Bounded like everything else here: an unbounded fetch against a half-started browser
+  // is another way to hang a CI job with nothing to show for it.
+  const version = await (
+    await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(15000) })
+  ).json();
   const browser = await connect(version.webSocketDebuggerUrl);
 
   return {
@@ -128,9 +132,27 @@ export function connect(url) {
   const pending = new Map();
   let nextId = 1;
 
+  // A socket that neither opens nor errors would otherwise hang every later send()
+  // forever, since they all await this. A CI job that hangs is far worse than one that
+  // fails: it burns the whole job timeout and reports nothing useful.
   const ready = new Promise((resolve, reject) => {
-    socket.addEventListener('open', resolve, { once: true });
-    socket.addEventListener('error', () => reject(new Error(`could not connect to ${url}`)), { once: true });
+    const timer = setTimeout(() => reject(new Error(`timed out connecting to ${url}`)), 30000);
+    socket.addEventListener(
+      'open',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true }
+    );
+    socket.addEventListener(
+      'error',
+      () => {
+        clearTimeout(timer);
+        reject(new Error(`could not connect to ${url}`));
+      },
+      { once: true }
+    );
   });
 
   socket.addEventListener('message', (event) => {
