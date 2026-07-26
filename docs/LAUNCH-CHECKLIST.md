@@ -12,25 +12,29 @@ For the reasoning behind any of this, see [ROADMAP.md](ROADMAP.md).
 
 ## Blockers
 
-### 1. Pick a domain — blocks everything
+### 1. Get the site live at memtab.fixit.works
 
-Needed twice over:
+The domain is chosen and everything in the repo points at it — canonical, `og:url`,
+sitemap, and the `routes` entry in [`wrangler.jsonc`](../wrangler.jsonc). The privacy
+policy is a real page at `https://memtab.fixit.works/privacy`, which is the URL to give
+both stores.
 
-- Both stores require a **stable privacy-policy URL**. A GitHub blob URL works but ties
-  the listing to a repo path you might rename. Putting the policy text in the description
-  instead of the field is a listed rejection cause.
-- `site/index.html` still carries `<link rel="canonical" href="https://memtab.example.com/">`.
-  A canonical pointing at the wrong host is worse than none.
+What's left is account-side and can't be done from the repo:
 
-- [ ] Register the domain
-- [ ] Add it to Cloudflare — Workers custom domains need a zone you own there
-      ([docs/DEPLOY.md](DEPLOY.md#custom-domain))
-- [ ] Update the canonical in `site/index.html`
-- [ ] Serve the privacy policy at a stable path; use that URL on both listings
-- [ ] `npm run deploy:site`
+- [ ] **`fixit.works` must be a zone on your Cloudflare account.** Workers custom domains
+      cannot attach to a zone you don't own there — this is the one hard requirement
+- [ ] `npx wrangler@latest login`
+- [ ] `npm run deploy:site` — Cloudflare creates the DNS record and certificate itself
+- [ ] Confirm `https://memtab.fixit.works/privacy` resolves before using it on a listing
+- [ ] Add `"workers_dev": false` to `wrangler.jsonc` once the custom domain is live
 
-If the domain has existing **CAA records** that don't permit Cloudflare's CAs, certificate
-issuance fails silently. Check them first.
+If `fixit.works` has existing **CAA records** that don't permit Cloudflare's CAs,
+certificate issuance fails silently — check those first. Verify compression while you're
+there:
+
+```bash
+curl -sI -H 'Accept-Encoding: br' https://memtab.fixit.works/ | grep -i content-encoding
+```
 
 ### 2. Verify the `favicon` permission on Edge — ten minutes, decides Phase 2
 

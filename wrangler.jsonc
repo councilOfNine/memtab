@@ -16,6 +16,11 @@
   "name": "memtab-site",
   "compatibility_date": "2026-07-26",
 
+  // Requires fixit.works to be a zone on the Cloudflare account you deploy from —
+  // Workers custom domains cannot attach to a zone you don't own there. Cloudflare
+  // creates the DNS record and the certificate itself on first deploy.
+  "routes": [{ "pattern": "memtab.fixit.works", "custom_domain": true }],
+
   "assets": {
     "directory": "./dist/site",
 

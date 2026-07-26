@@ -45,7 +45,7 @@ The standardised successor, `performance.measureUserAgentSpecificMemory()`, is C
 *and* requires cross-origin isolation, so it isn't a path either.
 
 If you want these browsers, that's a different product. Track it in an issue, don't
-半-start a port.
+half-start a port.
 
 ---
 
@@ -53,9 +53,10 @@ If you want these browsers, that's a different product. Track it in an issue, do
 
 Nothing else can finish until these land.
 
-1. **A domain.** Needed twice over: the site's `<link rel="canonical">` is still
-   `memtab.example.com`, and both stores want a **stable privacy-policy URL**. A GitHub
-   blob URL works but ties your store listing to a repo path you might rename.
+1. ~~**A domain.**~~ ✅ **memtab.fixit.works**. The canonical, the Cloudflare route and the
+   privacy policy at `https://memtab.fixit.works/privacy` are all wired up in the repo. What
+   remains is DNS: the zone has to exist on your Cloudflare account before
+   `npm run deploy:site` can attach the custom domain.
 2. **Trader or Non-Trader** (Chrome, EU Digital Services Act). Google will not decide for
    you. Declaring Trader publishes your legal name, address and phone on the listing.
 3. **Which Google account owns the listing.** Its email can *never* be changed, and a
@@ -74,7 +75,8 @@ Nothing else can finish until these land.
 - Listing copy, single-purpose statement, per-permission justifications —
   [`store/listing/`](../store/listing), enforced against the manifest by `npm run lint`
 - All required images at exact dimensions — `npm run store-assets` 🤖
-- Privacy policy text — [`PRIVACY.md`](../PRIVACY.md)
+- Privacy policy — [`PRIVACY.md`](../PRIVACY.md) plus a real page at
+  [`site/privacy/`](../site/privacy) served as `/privacy`
 - Full step-by-step — [`docs/PUBLISHING.md`](PUBLISHING.md)
 - Browser smoke test proving the extension actually works — `npm run test:e2e` 🤖
 
@@ -83,7 +85,8 @@ Nothing else can finish until these land.
 1. Register the developer account, pay the fee, enable 2-Step Verification, declare
    Trader status. **The fee amount is not published anywhere official** — check it on the
    payment screen.
-2. Host the privacy policy at a stable URL.
+2. ~~Host the privacy policy at a stable URL.~~ ✅ `https://memtab.fixit.works/privacy` —
+   pending the first deploy.
 3. Create the listing and submit. The API **cannot create a listing**, only update one,
    so the first submission is manual by definition.
 

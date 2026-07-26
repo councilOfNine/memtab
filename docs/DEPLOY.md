@@ -107,7 +107,7 @@ Dashboard → your Worker → Settings → Domains & Routes → Add → Custom D
 `wrangler.jsonc`:
 
 ```jsonc
-"routes": [{ "pattern": "memtab.example.com", "custom_domain": true }]
+"routes": [{ "pattern": "memtab.fixit.works", "custom_domain": true }]
 ```
 
 Cloudflare creates the DNS record and issues the certificate itself. If the certificate
@@ -161,12 +161,17 @@ Two things to remember:
 
 ## Before launch
 
-One placeholder needs replacing: the `<link rel="canonical">` in
-[`site/index.html`](../site/index.html) points at `https://memtab.example.com/`. Set it to
-the real domain — a canonical pointing at the wrong host is worse than not having one.
+The domain is **memtab.fixit.works**, and everything in the repo already points at it: the
+canonical, `og:url`, the sitemap, and the `routes` entry in
+[`wrangler.jsonc`](../wrangler.jsonc).
 
-The Open Graph `og:image` is a relative path, so it resolves correctly on whatever domain
-you deploy to and needs no change.
+One thing is left, and it is not a repo change: **`fixit.works` has to be a zone on your
+Cloudflare account.** Workers custom domains cannot attach to a zone you don't own there.
+Once it is, `npm run deploy:site` publishes and Cloudflare creates the DNS record and
+certificate itself.
+
+The privacy policy is served at `https://memtab.fixit.works/privacy` — that is the URL to give both
+stores, rather than a GitHub blob URL that breaks if the repo is ever renamed.
 
 ## Updating the social card
 

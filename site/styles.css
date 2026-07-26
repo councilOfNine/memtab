@@ -770,3 +770,91 @@ h1 {
 .footer__links a:hover {
   color: var(--accent);
 }
+
+/* ── prose pages (privacy) ────────────────────────────────────── */
+
+.prose {
+  max-width: 74ch;
+}
+
+.prose__title {
+  font-size: clamp(30px, 4vw, 40px);
+}
+
+.prose__meta {
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.prose__lede {
+  margin-top: 22px;
+  font-size: 17.5px;
+  color: var(--text-dim);
+}
+
+.prose h2 {
+  margin-top: 38px;
+  font-size: 20px;
+  font-weight: 660;
+}
+
+.prose p {
+  margin-top: 14px;
+  color: var(--text-dim);
+}
+
+.prose strong {
+  color: var(--text);
+}
+
+.prose pre {
+  margin-top: 14px;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-alt);
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+/* Wide content scrolls inside its own box; the page body never scrolls sideways. */
+.tablewrap {
+  margin-top: 18px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.prose th,
+.prose td {
+  padding: 11px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose th {
+  background: var(--surface);
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+.prose td {
+  color: var(--text-dim);
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: 0;
+}
