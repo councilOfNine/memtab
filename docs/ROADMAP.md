@@ -76,7 +76,7 @@ Nothing else can finish until these land.
   [`store/listing/`](../store/listing), enforced against the manifest by `npm run lint`
 - All required images at exact dimensions — `npm run store-assets` 🤖
 - Privacy policy — [`PRIVACY.md`](../PRIVACY.md) plus a real page at
-  [`site/privacy/`](../site/privacy) served as `/privacy`
+  [`site/privacy.html`](../site/privacy.html) served as `/privacy`
 - Full step-by-step — [`docs/PUBLISHING.md`](PUBLISHING.md)
 - Browser smoke test proving the extension actually works — `npm run test:e2e` 🤖
 

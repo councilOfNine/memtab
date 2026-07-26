@@ -21,6 +21,10 @@
   // creates the DNS record and the certificate itself on first deploy.
   "routes": [{ "pattern": "memtab.fixit.works", "custom_domain": true }],
 
+  // The custom domain is live, so the workers.dev URL is redundant. Note: turning this
+  // off in the dashboard WITHOUT setting it here re-enables it on the next deploy.
+  "workers_dev": false,
+
   "assets": {
     "directory": "./dist/site",
 

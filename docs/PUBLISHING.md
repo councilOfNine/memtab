@@ -63,7 +63,7 @@ https://memtab.fixit.works/privacy
 Use that URL on both listings. A GitHub blob URL also works but breaks if the repo is
 ever renamed or moved, and the store keeps whatever you gave it.
 
-The page is [`site/privacy/index.html`](../site/privacy/index.html); [`PRIVACY.md`](../PRIVACY.md)
+The page is [`site/privacy.html`](../site/privacy.html); [`PRIVACY.md`](../PRIVACY.md)
 is the same text for people reading the repo.
 
 ---
