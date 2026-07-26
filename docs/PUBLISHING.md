@@ -54,14 +54,17 @@ subscriptions, which MemTab does not.
 The store requires a **linkable URL**, not text pasted into the description. Putting the
 policy in the description instead of the field is a listed rejection cause.
 
-[`PRIVACY.md`](../PRIVACY.md) is the policy. Either link the GitHub copy:
+The policy is served from the marketing site:
 
 ```
-https://github.com/itsmiketorres/memtab/blob/main/PRIVACY.md
+https://memtab.fixit.works/privacy
 ```
 
-or, better, serve it from the marketing site so it survives the repo being renamed. See
-[docs/DEPLOY.md](DEPLOY.md).
+Use that URL on both listings. A GitHub blob URL also works but breaks if the repo is
+ever renamed or moved, and the store keeps whatever you gave it.
+
+The page is [`site/privacy/index.html`](../site/privacy/index.html); [`PRIVACY.md`](../PRIVACY.md)
+is the same text for people reading the repo.
 
 ---
 

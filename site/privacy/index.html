@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy Policy — MemTab</title>
+    <meta
+      name="description"
+      content="MemTab collects nothing, transmits nothing, and makes no network requests. What it reads, what it stores, and how to verify that yourself."
+    />
+    <meta name="theme-color" content="#0f1216" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
+    <link rel="canonical" href="https://memtab.fixit.works/privacy" />
+    <link rel="stylesheet" href="../styles.css" />
+
+    <link rel="icon" href="../icon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="../icon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <a class="nav__brand" href="/">
+        <img src="../icon.svg" alt="" width="26" height="26" decoding="async" />
+        <span>MemTab</span>
+      </a>
+      <nav>
+        <a href="/#see">See it</a>
+        <a href="/#measures">What it measures</a>
+        <a href="/#install">Install</a>
+        <a href="https://github.com/itsmiketorres/memtab" class="nav__cta" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main id="main" class="section prose">
+      <h1 class="prose__title">Privacy Policy</h1>
+      <p class="prose__meta">Last updated 26 July 2026</p>
+
+      <p class="prose__lede">
+        MemTab does not collect, transmit, or sell any data. There is no server, no analytics,
+        no telemetry, and no third-party service of any kind.
+      </p>
+
+      <h2>What MemTab reads</h2>
+      <p>Everything below stays on your machine.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Why</th>
+              <th>Where it goes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>performance.memory</code> — the JavaScript heap size of the page you're on</td>
+              <td>To pick a colour</td>
+              <td>Kept in memory in that tab. Never written anywhere, never leaves the tab.</td>
+            </tr>
+            <tr>
+              <td>The <code>&lt;link rel="icon"&gt;</code> elements in the page's <code>&lt;head&gt;</code></td>
+              <td>To draw the site's own favicon inside the indicator</td>
+              <td>Used immediately, then discarded.</td>
+            </tr>
+            <tr>
+              <td>The current tab's URL, in the extension's service worker</td>
+              <td>To look up that page's favicon in the browser's local database</td>
+              <td>Used for the lookup; the resulting image is cached in memory.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        MemTab does <strong>not</strong> read page text, form fields, passwords, cookies,
+        <code>localStorage</code>, browsing history, or anything you type.
+      </p>
+
+      <h2>What MemTab stores</h2>
+      <p>
+        <strong>Your settings</strong> — thresholds, colours, indicator style, poll intervals, and
+        the list of sites you've asked it to skip — go in <code>chrome.storage.sync</code>. Your
+        browser syncs that across profiles you are signed into, using your own account. MemTab has
+        no access to it beyond your own browser. No browsing data is stored there.
+      </p>
+      <p>
+        <strong>Cached favicons</strong> go in <code>chrome.storage.session</code>, which lives in
+        memory and is cleared when the browser closes. Tabs in private/incognito windows are never
+        cached at all, so no record of private browsing is created.
+      </p>
+      <p>
+        You can export or delete everything from the options page at any time. Uninstalling MemTab
+        removes it.
+      </p>
+
+      <h2>Network requests</h2>
+      <p><strong>MemTab makes no network requests.</strong></p>
+      <p>
+        The only <code>fetch()</code> in the codebase targets
+        <code>chrome-extension://&lt;id&gt;/_favicon/</code>, which is MemTab's own origin and a
+        lookup against a local database the browser already maintains. It does not touch the
+        network.
+      </p>
+      <p>
+        An earlier design fetched favicon URLs from the pages you visited. That was dropped: the
+        URL is page-controlled, so fetching it from the extension's privileged context would let a
+        hostile page use MemTab to read cross-origin and intranet URLs on its behalf.
+      </p>
+
+      <h2>Permissions</h2>
+      <p>
+        Each requested permission and what it is used for is documented in
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/docs/PERMISSIONS.md" rel="noopener">docs/PERMISSIONS.md</a>.
+      </p>
+
+      <h2>Verifying this</h2>
+      <p>
+        MemTab is open source and has no build step — the published package is exactly what is in
+        the repository, with no bundling, minification, or dependencies. You can read all of it.
+        Releases are built reproducibly and carry a build-provenance attestation, so you can check
+        that a published package was built from the tagged source:
+      </p>
+      <pre><code>gh attestation verify memtab-0.1.0.zip --repo itsmiketorres/memtab</code></pre>
+
+      <h2>Changes</h2>
+      <p>
+        Any change to this policy will be published on this page with an updated date, and called
+        out in the
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/CHANGELOG.md" rel="noopener">changelog</a>.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions:
+        <a href="https://github.com/itsmiketorres/memtab/issues" rel="noopener">github.com/itsmiketorres/memtab/issues</a>
+      </p>
+    </main>
+
+    <footer class="footer">
+      <span class="footer__brand">
+        <img src="../icon.svg" alt="" width="20" height="20" decoding="async" />
+        MemTab
+      </span>
+      <nav class="footer__links">
+        <a href="https://github.com/itsmiketorres/memtab" rel="noopener">Source</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/docs/TROUBLESHOOTING.md" rel="noopener">Troubleshooting</a>
+        <a href="https://github.com/itsmiketorres/memtab/issues" rel="noopener">Report a bug</a>
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/LICENSE" rel="noopener">MIT</a>
+      </nav>
+    </footer>
+  </body>
+</html>

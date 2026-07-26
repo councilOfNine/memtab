@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
 
-# No Sitemap line on purpose: this is a single page, and pointing at a sitemap.xml that
-# doesn't exist is worse than having none. Add one if the site ever grows.
+Sitemap: https://memtab.fixit.works/sitemap.xml
