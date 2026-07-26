@@ -1,0 +1,31 @@
+// Cloudflare Workers Static Assets config for the MemTab marketing site.
+//
+// Workers rather than Pages: Cloudflare's own guidance is now "Workers Static Assets is
+// the recommended way to deploy static sites... If you are starting a new project, use
+// Workers instead of Pages." Pages is not deprecated and still works — see
+// docs/DEPLOY.md for the Pages route and the one case where you'd need it (a custom
+// domain whose DNS you can't move to Cloudflare).
+//
+// This is an assets-only Worker: there is deliberately no "main" and no
+// "assets.binding", both of which are only valid when a Worker script exists. Requests
+// to static assets are free and unlimited and do not invoke a Worker at all.
+//
+//   npm run build:site
+//   npx wrangler@latest deploy
+{
+  "name": "memtab-site",
+  "compatibility_date": "2026-07-26",
+
+  "assets": {
+    "directory": "./dist/site",
+
+    // Serve the nearest 404.html with a real 404 status. The default,
+    // "single-page-application", would serve index.html for every unknown path and
+    // return 200, which is wrong for a static marketing site and bad for search.
+    "not_found_handling": "404-page",
+
+    // /install -> /install/ when install/index.html exists. This is already the
+    // default; stated explicitly so a future edit is a deliberate one.
+    "html_handling": "auto-trailing-slash"
+  }
+}

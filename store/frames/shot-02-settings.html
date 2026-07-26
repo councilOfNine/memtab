@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab screenshot 2 — settings</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* The real options page, embedded live rather than pasted in as a bitmap, so this
+         screenshot can never show a UI the extension no longer has. */
+      /* Sized so the whole settings card fits horizontally — nothing important may be
+         clipped by the frame edge. It bleeds off the bottom on purpose, to imply the
+         page continues. */
+      .embed {
+        position: absolute;
+        right: 26px;
+        top: 58px;
+        width: 700px;
+        height: 900px;
+        border: 0;
+        border-radius: 16px;
+        box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Store screenshot 2 of 5. Exactly 1280x800. -->
+    <div class="frame frame--shot">
+      <div style="max-width: 470px">
+        <div class="eyebrow">
+          <img src="icons/icon-32.png" alt="" width="20" height="20" />
+          Settings
+        </div>
+
+        <h1 style="margin-top: 18px">Set your own<br />limits.</h1>
+        <p class="sub">
+          Drag the thresholds, or type exact numbers. Megabytes, or a share of your device's heap
+          limit so the setting means the same thing on every machine you sync to.
+        </p>
+
+        <div class="bullets" style="margin-top: 30px; gap: 13px">
+          <div class="bullet" style="font-size: 18px">
+            <span class="bullet__dot" style="background: #2563eb"></span>
+            <span>Per-level colour pickers with hex entry</span>
+          </div>
+          <div class="bullet" style="font-size: 18px">
+            <span class="bullet__dot" style="background: #2563eb"></span>
+            <span>Live preview against a real tab strip</span>
+          </div>
+          <div class="bullet" style="font-size: 18px">
+            <span class="bullet__dot" style="background: #2563eb"></span>
+            <span>Hysteresis so tabs don't flicker on a boundary</span>
+          </div>
+          <div class="bullet" style="font-size: 18px">
+            <span class="bullet__dot" style="background: #2563eb"></span>
+            <span>Skip any site entirely</span>
+          </div>
+        </div>
+      </div>
+
+      <iframe class="embed" src="options/options.html" title="MemTab settings" scrolling="no"></iframe>
+    </div>
+  </body>
+</html>

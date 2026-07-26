@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab — small promo tile 440x280</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Chrome Web Store small promo tile. Required. Exactly 440x280. -->
+    <div class="frame frame--small">
+      <div class="split" style="gap: 26px">
+        <div>
+          <div class="wordmark">
+            <img src="icons/icon-48.png" alt="" width="30" height="30" />
+            MemTab
+          </div>
+          <h1 style="margin-top: 14px">Spot the tab<br />eating your RAM</h1>
+          <p class="sub">A traffic light on every favicon.</p>
+        </div>
+
+        <div class="strip" style="padding: 9px 9px 0; border-radius: 12px">
+          <div class="strip__row" style="flex-direction: column; gap: 6px">
+            <div class="tab" style="padding: 7px 10px; font-size: 12.5px; border-radius: 8px">
+              <canvas data-icon="ok:ring:D"></canvas>
+              <span>Docs</span>
+            </div>
+            <div class="tab" style="padding: 7px 10px; font-size: 12.5px; border-radius: 8px">
+              <canvas data-icon="warn:ring:A"></canvas>
+              <span>Analytics</span>
+            </div>
+            <div class="tab" style="padding: 7px 10px; font-size: 12.5px; border-radius: 8px">
+              <canvas data-icon="high:ring:E"></canvas>
+              <span>Editor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="shared/constants.js"></script>
+    <script src="shared/format.js"></script>
+    <script src="shared/palette.js"></script>
+    <script src="shared/settings.js"></script>
+    <script src="shared/levels.js"></script>
+    <script src="shared/measure.js"></script>
+    <script src="shared/render.js"></script>
+    <script src="frames.js"></script>
+  </body>
+</html>

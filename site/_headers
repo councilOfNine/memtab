@@ -1,0 +1,29 @@
+# Cloudflare Workers Static Assets / Pages header rules.
+#
+# Syntax: an unindented path pattern, then indented "Name: Value" lines.
+# These apply only to static asset responses — if a Worker script is ever added here,
+# it must set its own headers, because these rules do not apply to Worker output.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
+  # The site is entirely self-hosted — no CDN fonts, no analytics, no external scripts —
+  # so this can stay strict. Nothing here is inline: the demo lives in demo.js.
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+
+# The HTML is the thing that changes; let it revalidate rather than go stale.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Assets are not content-hashed, so a long max-age would strand people on an old build.
+# An hour is enough to make repeat visits cheap without making a deploy invisible.
+/shared/*
+  Cache-Control: public, max-age=3600
+
+/icons/*
+  Cache-Control: public, max-age=86400

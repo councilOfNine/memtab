@@ -50,6 +50,9 @@ jobs:
       - name: Build distributable
         run: npm run build
 
+      - name: Build the marketing site
+        run: npm run build:site
+
       - name: Check the build is reproducible
         run: |
           mv dist/memtab-*.zip /tmp/first.zip
@@ -63,3 +66,8 @@ jobs:
         with:
           name: memtab-unpacked
           path: dist/memtab/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memtab-site
+          path: dist/site/

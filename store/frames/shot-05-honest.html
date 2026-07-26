@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab screenshot 5 — what it measures</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!--
+      Store screenshot 5 of 5. Exactly 1280x800.
+
+      This one exists to set expectations before install rather than after. The reading
+      is the renderer's JS heap, not the tab's real memory, and saying so in the listing
+      is both honest and the best defence against "functionality does not match the
+      description" reviews.
+    -->
+    <div class="frame frame--shot frame--dark">
+      <div class="eyebrow">
+        <img src="icons/icon-32.png" alt="" width="20" height="20" />
+        Straight answer
+      </div>
+
+      <h1 style="margin-top: 18px">What the number<br />actually is.</h1>
+      <p class="sub">
+        MemTab reads <code>performance.memory</code> — the only per-page memory figure a Chrome
+        extension can get. It is the JavaScript heap of the renderer serving a site.
+      </p>
+
+      <div class="bullets" style="margin-top: 46px; gap: 22px">
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #6ea8fe"></span>
+          <span>
+            <strong>It is not the tab's total memory.</strong><br />
+            Images, the DOM and the compositor are excluded. Real usage is usually 2–4× higher.
+          </span>
+        </div>
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #6ea8fe"></span>
+          <span>
+            <strong>Tabs on the same site share one reading.</strong><br />
+            Chrome gives them one renderer process, so they move together.
+          </span>
+        </div>
+        <div class="bullet">
+          <span class="bullet__dot" style="background: #6ea8fe"></span>
+          <span>
+            <strong>Background tabs update slowly.</strong><br />
+            Chrome throttles hidden tabs, so their colour can be a few minutes old.
+          </span>
+        </div>
+      </div>
+
+      <p class="footnote" style="margin-top: 42px">
+        Best used as a leak detector for the tab you're on. For triaging forty background tabs,
+        Chrome's Task Manager reads the real figure — MemTab doesn't try to replace it.
+      </p>
+    </div>
+
+    <script src="shared/constants.js"></script>
+    <script src="shared/format.js"></script>
+    <script src="shared/palette.js"></script>
+    <script src="shared/settings.js"></script>
+    <script src="shared/levels.js"></script>
+    <script src="shared/measure.js"></script>
+    <script src="shared/render.js"></script>
+    <script src="frames.js"></script>
+  </body>
+</html>

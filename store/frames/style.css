@@ -1,0 +1,376 @@
+/*
+ * Styles for the generated Chrome Web Store and social assets.
+ *
+ * Each frame is authored at its exact final pixel size and screenshotted by
+ * scripts/make-store-assets.mjs with headless Chrome. Nothing here is responsive on
+ * purpose — a fixed canvas is easier to art-direct than a fluid one, and the store
+ * dimensions never change.
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #fff;
+  color: #14171c;
+  overflow: hidden;
+}
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(150deg, #f8fafc 0%, #eef2f7 55%, #e6ecf4 100%);
+}
+
+.frame--dark {
+  background: linear-gradient(150deg, #10141a 0%, #161c25 55%, #1b232e 100%);
+  color: #eef1f6;
+}
+
+/* Sizes, one per store slot. */
+.frame--shot {
+  width: 1280px;
+  height: 800px;
+  padding: 74px 88px;
+}
+
+.frame--marquee {
+  width: 1400px;
+  height: 560px;
+  padding: 0 84px;
+}
+
+/* The split grid sizes the strip to its content, which leaves the marquee looking
+   empty on the right. Give it a real share of the canvas. */
+.frame--marquee .strip {
+  width: 620px;
+}
+
+.frame--marquee .strip__body {
+  height: 150px;
+}
+
+.frame--small {
+  width: 440px;
+  height: 280px;
+  padding: 0 34px;
+}
+
+.frame--social {
+  width: 1200px;
+  height: 630px;
+  padding: 0 76px;
+}
+
+/* Soft colour wash so the tiles don't read as a plain slide. */
+.frame::after {
+  content: '';
+  position: absolute;
+  right: -14%;
+  top: -34%;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.frame--dark::after {
+  background: radial-gradient(circle, rgba(110, 168, 254, 0.22), transparent 68%);
+}
+
+/* ── type ─────────────────────────────────────────────────────── */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5b6675;
+}
+
+.frame--dark .eyebrow {
+  color: #9aa5b4;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.06;
+}
+
+.frame--shot h1 {
+  font-size: 54px;
+}
+
+.frame--marquee h1 {
+  font-size: 60px;
+}
+
+.frame--small h1 {
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.frame--social h1 {
+  font-size: 60px;
+}
+
+.sub {
+  color: #4d5766;
+  line-height: 1.45;
+}
+
+.frame--dark .sub {
+  color: #a8b2c0;
+}
+
+.frame--shot .sub {
+  font-size: 23px;
+  max-width: 40ch;
+  margin-top: 20px;
+}
+
+.frame--marquee .sub {
+  font-size: 22px;
+  max-width: 34ch;
+  margin-top: 18px;
+}
+
+.frame--small .sub {
+  font-size: 14.5px;
+  margin-top: 9px;
+  max-width: 28ch;
+}
+
+.frame--social .sub {
+  font-size: 24px;
+  max-width: 38ch;
+  margin-top: 20px;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.frame--small .wordmark {
+  font-size: 21px;
+  gap: 9px;
+}
+
+.frame--marquee .wordmark,
+.frame--social .wordmark {
+  font-size: 27px;
+}
+
+.wordmark img {
+  display: block;
+}
+
+/* ── layout helpers ───────────────────────────────────────────── */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 60px;
+  height: 100%;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footnote {
+  font-size: 15px;
+  color: #6b7583;
+}
+
+.frame--dark .footnote {
+  color: #8f99a8;
+}
+
+/* ── tab strip mock ───────────────────────────────────────────── */
+
+.strip {
+  border-radius: 15px;
+  padding: 13px 13px 0;
+  background: #dde1e6;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.17);
+}
+
+.strip--dark {
+  background: #202124;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42);
+}
+
+.strip__row {
+  display: flex;
+  gap: 5px;
+}
+
+/* Let tabs share the width, the way Chrome does when a window has a handful open —
+   a short row against a wide strip reads as a broken mock-up rather than a browser. */
+.strip__row--fill .tab {
+  flex: 1;
+  min-width: 0;
+}
+
+.strip__row--fill .tab span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip__body {
+  height: 96px;
+  margin-top: 0;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+}
+
+.strip--dark .strip__body {
+  background: #292a2d;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: 11px 11px 0 0;
+  background: #fff;
+  color: #3c4043;
+  font-size: 14.5px;
+  white-space: nowrap;
+}
+
+.strip--dark .tab {
+  background: #35363a;
+  color: #e8eaed;
+}
+
+.tab--muted {
+  opacity: 0.72;
+}
+
+.tab canvas {
+  width: 19px;
+  height: 19px;
+  flex: none;
+}
+
+/* ── feature bullets ──────────────────────────────────────────── */
+
+.bullets {
+  display: grid;
+  gap: 15px;
+  margin-top: 34px;
+}
+
+.bullet {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  font-size: 19.5px;
+  color: #333c4a;
+}
+
+.frame--dark .bullet {
+  color: #c4ccd8;
+}
+
+.bullet__dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex: none;
+}
+
+.bullet strong {
+  color: #14171c;
+  font-weight: 620;
+}
+
+.frame--dark .bullet strong {
+  color: #f2f5f9;
+}
+
+/* ── swatch row (styles / colours) ────────────────────────────── */
+
+.showcase {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 44px;
+}
+
+.showcase__item {
+  padding: 20px 16px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  text-align: center;
+}
+
+.frame--dark .showcase__item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.showcase__icons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.showcase__icons canvas {
+  width: 38px;
+  height: 38px;
+}
+
+.showcase__name {
+  font-size: 16.5px;
+  font-weight: 620;
+}
+
+.showcase__note {
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: #6b7583;
+}
+
+.frame--dark .showcase__note {
+  color: #939eac;
+}
+
+/* ── product screenshot embed ─────────────────────────────────── */
+
+.shot {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+}

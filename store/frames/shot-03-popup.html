@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab screenshot 3 — the popup</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .popup-embed {
+        width: 296px;
+        height: 300px;
+        border: 0;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 26px 64px rgba(15, 23, 42, 0.26);
+      }
+
+      .popup-stage {
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        margin-top: 46px;
+      }
+
+      .callouts {
+        display: grid;
+        gap: 17px;
+        max-width: 460px;
+      }
+
+      .callout {
+        padding: 16px 19px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .callout strong {
+        display: block;
+        font-size: 17px;
+        font-weight: 630;
+      }
+
+      .callout span {
+        display: block;
+        margin-top: 3px;
+        font-size: 15.5px;
+        color: #5b6675;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Store screenshot 3 of 5. Exactly 1280x800. -->
+    <div class="frame frame--shot">
+      <div class="eyebrow">
+        <img src="icons/icon-32.png" alt="" width="20" height="20" />
+        One click
+      </div>
+
+      <h1 style="margin-top: 18px">The number, and<br />why it's that number.</h1>
+      <p class="sub">
+        Click the toolbar icon for the current tab's reading, where it sits against your
+        thresholds, and a plain answer when MemTab can't run on a page.
+      </p>
+
+      <div class="popup-stage">
+        <iframe class="popup-embed" src="popup/popup.html" title="MemTab popup" scrolling="no"></iframe>
+
+        <div class="callouts">
+          <div class="callout">
+            <strong>Live reading with context</strong>
+            <span>Megabytes, share of the heap limit, and where the thresholds fall.</span>
+          </div>
+          <div class="callout">
+            <strong>Honest about blind spots</strong>
+            <span>Says when a page blocks favicon changes, or when a reading is stale.</span>
+          </div>
+          <div class="callout">
+            <strong>Skip a site instantly</strong>
+            <span>One tick and MemTab leaves that origin alone.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

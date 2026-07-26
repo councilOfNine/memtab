@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MemTab — social card 1200x630</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Open Graph / Twitter card for the marketing site. Exactly 1200x630. -->
+    <div class="frame frame--social frame--dark">
+      <div class="split">
+        <div>
+          <div class="wordmark">
+            <img src="icons/icon-48.png" alt="" width="36" height="36" />
+            MemTab
+          </div>
+          <h1 style="margin-top: 20px">Which tab is eating<br />your memory?</h1>
+          <p class="sub">A traffic light on every tab's favicon. Open source, no tracking.</p>
+        </div>
+
+        <div class="strip strip--dark">
+          <div class="strip__row" style="flex-direction: column; gap: 7px">
+            <div class="tab">
+              <canvas data-icon="ok:ring:D"></canvas>
+              <span>Docs</span>
+            </div>
+            <div class="tab">
+              <canvas data-icon="warn:ring:A"></canvas>
+              <span>Analytics</span>
+            </div>
+            <div class="tab">
+              <canvas data-icon="high:ring:E"></canvas>
+              <span>Editor</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="shared/constants.js"></script>
+    <script src="shared/format.js"></script>
+    <script src="shared/palette.js"></script>
+    <script src="shared/settings.js"></script>
+    <script src="shared/levels.js"></script>
+    <script src="shared/measure.js"></script>
+    <script src="shared/render.js"></script>
+    <script src="frames.js"></script>
+  </body>
+</html>

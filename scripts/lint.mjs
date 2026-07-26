@@ -185,6 +185,92 @@ function manifestShape() {
   pass(check, `v${manifest.version}, permissions: ${[...declared].join(', ')}`);
 }
 
+// ── Chrome Web Store listing ────────────────────────────────────────────────
+
+function storeListing() {
+  const check = 'store listing';
+  const manifest = json('src', 'manifest.json');
+
+  // Hard limits enforced by the Web Store dashboard. Overrunning them is only
+  // discovered at submission time otherwise, which is a slow way to find out.
+  if (manifest.name.length > 75) {
+    fail(check, `manifest name is ${manifest.name.length} chars, over the 75 limit`);
+  }
+  if (manifest.description.length > 132) {
+    fail(
+      check,
+      `manifest description is ${manifest.description.length} chars, over the 132-char store summary limit`
+    );
+  }
+
+  // The store "summary" IS the manifest description, so a separate copy of it in the
+  // listing folder must not drift.
+  const summaryPath = join(ROOT, 'store', 'listing', 'summary.txt');
+  if (existsSync(summaryPath)) {
+    const summary = readFileSync(summaryPath, 'utf8').trim();
+    if (summary.length > 132) {
+      fail(check, `store/listing/summary.txt is ${summary.length} chars, over the 132 limit`);
+    }
+    if (summary !== manifest.description) {
+      fail(
+        check,
+        'store/listing/summary.txt does not match the manifest description — the store ' +
+          'summary is taken from the manifest, so they cannot differ'
+      );
+    }
+  }
+
+  // Every permission needs a written justification in the dashboard. Keeping the text
+  // in the repo is only useful if it actually covers what the manifest requests.
+  const justifications = read('store', 'listing', 'permission-justifications.md');
+  const requested = [...(manifest.permissions || []), ...(manifest.host_permissions || [])];
+  for (const permission of requested) {
+    if (!justifications.includes(permission)) {
+      fail(check, `no permission justification mentions "${permission}"`);
+    }
+  }
+
+  pass(check, `name ${manifest.name.length}/75, summary ${manifest.description.length}/132, ${requested.length} permissions justified`);
+}
+
+// ── marketing site ──────────────────────────────────────────────────────────
+
+function siteCsp() {
+  const check = 'site CSP';
+  const siteDir = join(ROOT, 'site');
+  if (!existsSync(siteDir)) return;
+
+  // site/_headers ships `style-src 'self'; script-src 'self'` with no 'unsafe-inline',
+  // so an inline <style>, a style="..." attribute or an inline <script> is silently
+  // dropped by the browser — the page looks broken only once deployed. Setting styles
+  // through CSSOM (element.style.setProperty) is fine and is what demo.js does.
+  for (const file of walk(siteDir).filter((f) => f.endsWith('.html'))) {
+    const source = readFileSync(file, 'utf8');
+    const name = relative(ROOT, file);
+
+    if (/\sstyle="/.test(source)) {
+      fail(check, `${name} has an inline style attribute, which the site's CSP blocks`);
+    }
+    if (/<style[\s>]/.test(source)) {
+      fail(check, `${name} has an inline <style> block, which the site's CSP blocks`);
+    }
+    if (/<script(?![^>]*\ssrc=)[^>]*>/.test(source)) {
+      fail(check, `${name} has an inline <script>, which the site's CSP blocks`);
+    }
+  }
+
+  // The page loads the extension's shared modules; they must match _order.json or the
+  // demo dies with a ReferenceError.
+  const order = json('src', 'shared', '_order.json').files;
+  const html = read('site', 'index.html');
+  const tags = [...html.matchAll(/<script src="shared\/([a-z-]+\.js)"><\/script>/g)].map((m) => m[1]);
+  if (tags.join() !== order.join()) {
+    fail(check, `site/index.html loads [${tags.join(', ')}], expected [${order.join(', ')}]`);
+  }
+
+  pass(check, 'no inline styles or scripts; shared modules match');
+}
+
 // ── guarded access to channel-gated APIs ────────────────────────────────────
 
 function guardedOptionalApis() {
@@ -244,8 +330,9 @@ function markdownLinks() {
 
 function sourceStyle() {
   const check = 'source style';
-  for (const file of walk(SRC)) {
-    if (!/\.(js|css|html|json)$/.test(file)) continue;
+  const dirs = [SRC, join(ROOT, 'site'), join(ROOT, 'store'), join(ROOT, 'scripts')];
+  for (const file of dirs.flatMap((dir) => (existsSync(dir) ? walk(dir) : []))) {
+    if (!/\.(js|mjs|css|html|json)$/.test(file)) continue;
     const source = readFileSync(file, 'utf8');
     const name = relative(ROOT, file);
 
@@ -253,14 +340,16 @@ function sourceStyle() {
     if (/[ \t]+$/m.test(source)) fail(check, `${name} has trailing whitespace`);
     if (source.length && !source.endsWith('\n')) fail(check, `${name} has no trailing newline`);
     if (source.includes('\r\n')) fail(check, `${name} has CRLF line endings`);
-    // Two independent checks, no exemptions. Nesting them (as an earlier version did)
-    // made the console.log arm unreachable and silently excused src/shared/ entirely.
     if (/^\s*debugger\b/m.test(source)) {
       fail(check, `${name} contains a debugger statement`);
     }
-    if (/^\s*console\.log\b/m.test(source)) {
-      // Diagnostics belong behind the verbose setting, via the content script's log()
-      // helper. A bare console.log at the start of a line is leftover debugging.
+
+    // The console.log rule is about SHIPPED extension code, where diagnostics belong
+    // behind the verbose setting via the content script's log() helper. In scripts/,
+    // stdout is the entire point of the program, so exclude it — but keep the check
+    // as its own statement rather than nesting it inside the debugger test, which is
+    // how an earlier version made this arm silently unreachable.
+    if (name.startsWith('src/') && /^\s*console\.log\b/m.test(source)) {
       fail(check, `${name} has a bare console.log — use log() behind the verbose setting`);
     }
   }
@@ -285,6 +374,8 @@ sharedLoadOrder();
 moduleExportGuards();
 manifestPathsExist();
 manifestShape();
+storeListing();
+siteCsp();
 guardedOptionalApis();
 markdownLinks();
 sourceStyle();

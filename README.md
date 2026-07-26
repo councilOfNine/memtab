@@ -122,8 +122,37 @@ npm run build
 Stages `src/` into `dist/` and produces a deterministic zip — fixed timestamps, sorted
 entries — so two builds of the same commit are byte-identical.
 
+| Command | What it does |
+| --- | --- |
+| `npm run check` | Lint + tests |
+| `npm run build` | Store-ready extension zip in `dist/` |
+| `npm run build:site` | Marketing site into `dist/site/` |
+| `npm run deploy:site` | Build the site and deploy it to Cloudflare |
+| `npm run store-assets` | Chrome Web Store screenshots and promo tiles (needs Chrome) |
+| `npm run icons` | Regenerate the extension icons from `scripts/make-icons.mjs` |
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) to get started and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it fits together.
+
+## The website
+
+[`site/`](site) is the marketing page — plain HTML and CSS, no framework, no external
+requests. Its interactive demo runs the extension's *real* renderer (`src/shared/`
+is copied in at build time), so the page can't advertise an indicator the product
+doesn't draw.
+
+[docs/DEPLOY.md](docs/DEPLOY.md) covers deploying it to Cloudflare Workers Static Assets,
+including custom domains and the one case where you'd want Pages instead.
+
+## Publishing
+
+[docs/PUBLISHING.md](docs/PUBLISHING.md) is the full Chrome Web Store playbook: account
+setup, the exact asset sizes, what gets extensions rejected, and the review process.
+
+The listing copy is written and lives in [`store/listing/`](store/listing) — description,
+single-purpose statement, and a justification for every permission. `npm run lint` checks
+that the copy hasn't drifted from the manifest and that every requested permission has a
+justification.
 
 ## History
 

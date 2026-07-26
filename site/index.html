@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MemTab — see which tab is eating your memory</title>
+    <meta
+      name="description"
+      content="A Chrome extension that shows each tab's JavaScript memory usage as a colour on its favicon. Configurable thresholds and colours. Open source, no tracking, no network requests."
+    />
+    <!-- PLACEHOLDER: change to the real domain before launch. A canonical pointing at
+         the wrong host is worse than none at all. -->
+    <link rel="canonical" href="https://memtab.example.com/" />
+    <link rel="icon" href="icons/icon-32.png" sizes="32x32" />
+    <link rel="icon" href="icons/icon-128.png" sizes="128x128" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MemTab — see which tab is eating your memory" />
+    <meta
+      property="og:description"
+      content="Each tab's memory usage, as a colour on its favicon. Configurable thresholds and colours. Open source, no tracking."
+    />
+    <meta property="og:image" content="social-card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="nav">
+      <a class="nav__brand" href="/">
+        <img src="icons/icon-48.png" alt="" width="26" height="26" />
+        <span>MemTab</span>
+      </a>
+      <nav>
+        <a href="#try">Try it</a>
+        <a href="#measures">What it measures</a>
+        <a href="#install">Install</a>
+        <a
+          href="https://github.com/itsmiketorres/memtab"
+          class="nav__cta"
+          rel="noopener"
+          >GitHub</a
+        >
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- ── hero ───────────────────────────────────────────────── -->
+      <section class="hero">
+        <div class="hero__copy">
+          <h1>Which tab is eating your&nbsp;memory?</h1>
+          <p class="lede">
+            MemTab puts a traffic light on every tab's favicon. Green while it's healthy, red when
+            it isn't — so a leaking tab announces itself instead of hiding behind thirty others.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="#install">Install it</a>
+            <a class="btn" href="https://github.com/itsmiketorres/memtab" rel="noopener">
+              View the source
+            </a>
+          </div>
+          <p class="hero__meta">
+            Free and MIT licensed · No tracking, no analytics, no network requests
+          </p>
+        </div>
+
+        <div class="hero__demo">
+          <div class="browser" aria-hidden="true">
+            <div class="browser__chrome">
+              <span class="browser__dot"></span>
+              <span class="browser__dot"></span>
+              <span class="browser__dot"></span>
+            </div>
+            <div class="browser__tabs" id="hero-tabs"></div>
+            <div class="browser__page">
+              <div class="skeleton skeleton--title"></div>
+              <div class="skeleton"></div>
+              <div class="skeleton skeleton--short"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── try it ─────────────────────────────────────────────── -->
+      <section class="section" id="try">
+        <div class="section__head">
+          <h2>Try it right here</h2>
+          <p>
+            This is the extension's actual rendering code, running on this page. Drag the memory
+            slider and watch the tab react.
+          </p>
+        </div>
+
+        <div class="demo">
+          <div class="demo__stage">
+            <div class="tabstrip tabstrip--light">
+              <span class="tabstrip__label">Light</span>
+              <div class="tabstrip__row" id="demo-light"></div>
+            </div>
+            <div class="tabstrip tabstrip--dark">
+              <span class="tabstrip__label">Dark</span>
+              <div class="tabstrip__row" id="demo-dark"></div>
+            </div>
+
+            <div class="demo__zoom">
+              <canvas id="demo-zoom" width="32" height="32" aria-hidden="true"></canvas>
+              <div class="demo__readout">
+                <strong id="demo-value">120 MB</strong>
+                <span id="demo-level">Healthy</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="demo__controls">
+            <div class="control">
+              <label for="demo-memory">Simulated memory</label>
+              <input
+                type="range"
+                id="demo-memory"
+                min="0"
+                max="1400"
+                step="10"
+                value="120"
+              />
+              <div class="control__scale"><span>0</span><span>1.4&nbsp;GB</span></div>
+            </div>
+
+            <div class="control control--split">
+              <div>
+                <label for="demo-warn">Warning above</label>
+                <span class="numfield">
+                  <input type="number" id="demo-warn" min="1" max="1400" step="10" value="250" />
+                  <span>MB</span>
+                </span>
+              </div>
+              <div>
+                <label for="demo-high">High above</label>
+                <span class="numfield">
+                  <input type="number" id="demo-high" min="1" max="1400" step="10" value="700" />
+                  <span>MB</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="control">
+              <span class="control__legend" id="demo-style-label">Indicator style</span>
+              <div class="chips" id="demo-styles" role="radiogroup" aria-labelledby="demo-style-label"></div>
+            </div>
+
+            <div class="control">
+              <span class="control__legend" id="demo-palette-label">Colours</span>
+              <div class="chips" id="demo-presets" role="radiogroup" aria-labelledby="demo-palette-label"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="demo__note">
+          In the extension all of this lives on a proper settings page, with a two-handle slider,
+          per-level colour pickers, hex entry, and a preview against your real tab strip.
+        </p>
+      </section>
+
+      <!-- ── features ───────────────────────────────────────────── -->
+      <section class="section section--alt">
+        <div class="section__head">
+          <h2>Built to stay out of the way</h2>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <h3>Your favicon, respected</h3>
+            <p>
+              Most versions of this idea replace the site's icon with a coloured square, and every
+              tab starts looking the same. MemTab draws <em>around</em> the real favicon instead, at
+              a resolution Chrome won't turn blocky.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Thresholds that are yours</h3>
+            <p>
+              Set the warning and high marks in megabytes, or as a share of your device's heap
+              limit so the same setting means the same thing on every machine you sync to.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Any colours you like</h3>
+            <p>
+              Stoplight by default. One click for a colour-blind-safe palette, or pick your own hex
+              values. The Bar style encodes the level by length too, so it reads with no colour
+              perception at all.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Quiet by default</h3>
+            <p>
+              Healthy tabs aren't decorated unless you ask, hysteresis stops a tab on a boundary
+              from flickering, and any site can be skipped entirely.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Nothing leaves your machine</h3>
+            <p>
+              No analytics, no telemetry, no network requests at all — not even to fetch a favicon.
+              No build step either, so the source you read is the code that runs.
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>Actually open source</h3>
+            <p>
+              MIT licensed, no dependencies, 65 tests and a lint that checks the things a normal
+              linter can't. Read it in an afternoon.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- ── honesty ────────────────────────────────────────────── -->
+      <section class="section" id="measures">
+        <div class="section__head">
+          <h2>What it actually measures</h2>
+          <p>
+            Worth knowing before you install, because the number is narrower than "how much memory
+            this tab uses".
+          </p>
+        </div>
+
+        <div class="honest">
+          <p>
+            MemTab reads <code>performance.memory</code> — the only per-page memory figure a Chrome
+            extension can get on the stable channel. It reports the
+            <strong>JavaScript heap of the renderer process</strong> serving a site.
+          </p>
+
+          <ul>
+            <li>
+              <strong>It isn't the tab's total memory.</strong> The DOM, images, decoded bitmaps,
+              canvas and the compositor are all excluded — usually most of what a tab really costs.
+              Real usage is typically two to four times higher.
+            </li>
+            <li>
+              <strong>Tabs on the same site share one reading.</strong> Chrome puts them in one
+              renderer process with one heap, so ten GitHub tabs show the same number.
+            </li>
+            <li>
+              <strong>Background tabs update slowly.</strong> Chrome throttles hidden tabs to about
+              one timer tick per minute, and may freeze or unload them entirely.
+            </li>
+          </ul>
+
+          <p class="honest__verdict">
+            So: MemTab is a good leak detector for the tab you're on. Watch one walk from green to
+            red over an afternoon and you've found something. For triaging forty background tabs,
+            Chrome's own Task Manager (<kbd>Shift</kbd>&nbsp;+&nbsp;<kbd>Esc</kbd>) reads the real
+            per-process figure and MemTab doesn't try to replace it.
+          </p>
+        </div>
+      </section>
+
+      <!-- ── install ────────────────────────────────────────────── -->
+      <section class="section section--alt" id="install">
+        <div class="section__head">
+          <h2>Install</h2>
+          <p>Not on the Chrome Web Store yet. Loading it unpacked takes about a minute.</p>
+        </div>
+
+        <ol class="steps">
+          <li>
+            <h3>Get the code</h3>
+            <pre><code>git clone https://github.com/itsmiketorres/memtab.git</code></pre>
+          </li>
+          <li>
+            <h3>Open the extensions page</h3>
+            <p>Go to <code>chrome://extensions</code> and turn on <strong>Developer mode</strong> in the top right.</p>
+          </li>
+          <li>
+            <h3>Load it</h3>
+            <p>Click <strong>Load unpacked</strong> and select the <code>src/</code> folder. That folder <em>is</em> the extension — there's no build step.</p>
+          </li>
+          <li>
+            <h3>Set your thresholds</h3>
+            <p>Click the MemTab icon, then <strong>Settings</strong>. Tabs that were already open need one reload.</p>
+          </li>
+        </ol>
+
+        <p class="cta-row">
+          <a class="btn btn--primary" href="https://github.com/itsmiketorres/memtab" rel="noopener">
+            Open the repository
+          </a>
+        </p>
+      </section>
+
+      <!-- ── faq ────────────────────────────────────────────────── -->
+      <section class="section" id="faq">
+        <div class="section__head"><h2>Questions</h2></div>
+
+        <div class="faq">
+          <details>
+            <summary>Does this slow my browser down?</summary>
+            <p>
+              Reading the memory figure is a single property access, and the default is once every
+              five seconds per visible tab. Background tabs poll far less often. The interval is
+              configurable, with a one-second floor — anything tighter costs more than it measures
+              and makes Chrome more likely to freeze the tab.
+            </p>
+          </details>
+
+          <details>
+            <summary>Why does it need access to every site?</summary>
+            <p>
+              Because it has to run on whatever page you're looking at, and it changes that page's
+              favicon. That access is used for exactly two things: reading the memory figure, and
+              injecting into tabs that were already open when you installed it. It never reads page
+              content and never sends anything anywhere.
+            </p>
+          </details>
+
+          <details>
+            <summary>Nothing happens on some pages.</summary>
+            <p>
+              Chrome forbids extensions from running on <code>chrome://</code> pages, the Web Store,
+              the PDF viewer and other extensions' pages. Some sites also have a security policy
+              that blocks generated favicons — there MemTab shows a small dot in the page corner
+              instead. Click the toolbar icon and it will tell you which case you're in.
+            </p>
+          </details>
+
+          <details>
+            <summary>Will it work in Edge, Brave or Arc?</summary>
+            <p>
+              It should — they're all Chromium, and MemTab uses nothing exotic. It's only tested in
+              Chrome, so if you hit something odd in another browser please open an issue.
+            </p>
+          </details>
+
+          <details>
+            <summary>Firefox or Safari?</summary>
+            <p>
+              Not currently. <code>performance.memory</code> is Chromium-only, so there's no
+              equivalent number to read. Safari and Firefox deliberately don't expose one.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__brand">
+        <img src="icons/icon-32.png" alt="" width="20" height="20" />
+        <span>MemTab</span>
+      </div>
+      <nav class="footer__links">
+        <a href="https://github.com/itsmiketorres/memtab" rel="noopener">Source</a>
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/PRIVACY.md" rel="noopener">Privacy</a>
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/docs/TROUBLESHOOTING.md" rel="noopener">Troubleshooting</a>
+        <a href="https://github.com/itsmiketorres/memtab/issues" rel="noopener">Report a bug</a>
+        <a href="https://github.com/itsmiketorres/memtab/blob/main/LICENSE" rel="noopener">MIT</a>
+      </nav>
+    </footer>
+
+    <script src="shared/constants.js"></script>
+    <script src="shared/format.js"></script>
+    <script src="shared/palette.js"></script>
+    <script src="shared/settings.js"></script>
+    <script src="shared/levels.js"></script>
+    <script src="shared/measure.js"></script>
+    <script src="shared/render.js"></script>
+    <script src="demo.js"></script>
+  </body>
+</html>
