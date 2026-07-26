@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/itsmiketorres/memtab#readme",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "test": "node --test 'test/**/*.test.js'",

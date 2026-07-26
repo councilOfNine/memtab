@@ -18,9 +18,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # `node --test` has changed how it interprets positional arguments between
-        # majors, so the supported range is actually exercised rather than assumed.
-        node-version: [20, 22, 24]
+        # `node --test` changed how it interprets positional arguments between majors,
+        # so the whole supported range is exercised rather than assumed. Node 20 is not
+        # here on purpose: it went end-of-life in April 2026, and it predates glob
+        # support in `node --test`, so `test/**/*.test.js` is read as a literal path.
+        node-version: [22, 24]
 
     steps:
       - uses: actions/checkout@v4

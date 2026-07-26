@@ -35,7 +35,11 @@ npm run check
 ```
 
 That runs `npm run lint` and `npm test`. Both are dependency-free. CI runs them on Node
-20, 22 and 24; `.nvmrc` pins 22 for local work.
+22 and 24; `.nvmrc` pins 22 for local work.
+
+Node 22 is the floor. Node 20 is end-of-life, and it also predates glob support in
+`node --test`, so the quoted `'test/**/*.test.js'` pattern in the `test` script is read
+there as a literal path.
 
 `npm run build` stages `src/` into `dist/` and produces a deterministic zip. It is not a
 bundler — there is no transform, and CI checks that two builds of the same commit are

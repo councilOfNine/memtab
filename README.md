@@ -113,7 +113,7 @@ npm run check
 ```
 
 Runs the lint (manifest validation, shared-module load order, doc links) and the tests
-(`node --test` over the pure logic). No dependencies; Node 20+.
+(`node --test` over the pure logic). No dependencies; Node 22+.
 
 ```bash
 npm run build
