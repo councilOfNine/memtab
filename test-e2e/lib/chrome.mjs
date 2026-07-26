@@ -119,9 +119,24 @@ export async function launchChrome({ chromePath = findChrome() } = {}) {
       } catch {
         /* already gone */
       }
-      proc.kill('SIGKILL');
-      await new Promise((resolve) => proc.once('exit', resolve)).catch(() => {});
-      rmSync(userDataDir, { recursive: true, force: true });
+
+      // Wait for the process to actually reap before touching its profile directory.
+      // Killing and immediately deleting raced on Linux: Chrome still had files open
+      // and rmSync threw ENOTEMPTY out of the test's after-hook.
+      if (proc.exitCode === null) {
+        proc.kill('SIGKILL');
+        await new Promise((resolve) => {
+          proc.once('exit', resolve);
+          setTimeout(resolve, 5000);
+        });
+      }
+
+      // Best-effort: a leftover temp directory is not worth failing a test run over.
+      try {
+        rmSync(userDataDir, { recursive: true, force: true });
+      } catch {
+        /* the OS will clean up /tmp */
+      }
     },
   };
 }

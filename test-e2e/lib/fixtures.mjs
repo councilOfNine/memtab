@@ -83,7 +83,14 @@ export function startFixtures() {
       const { port } = server.address();
       resolve({
         origin: `http://127.0.0.1:${port}`,
-        close: () => new Promise((done) => server.close(done)),
+        close: () =>
+          new Promise((done) => {
+            // server.close() only stops new connections; Chrome's keep-alive sockets
+            // would hold the server — and therefore the event loop — open indefinitely.
+            // On CI that turned a passing run into a job that hung until its timeout.
+            server.closeAllConnections();
+            server.close(done);
+          }),
       });
     });
   });
