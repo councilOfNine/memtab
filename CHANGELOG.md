@@ -30,6 +30,22 @@ manifest, and `npm run lint` fails if the two disagree.
 
 - Manifest description reworded to lead with the benefit; it doubles as the Web Store
   summary, and lint now enforces the 132-character limit.
+- **The site now ships no JavaScript.** The interactive demo is radio inputs plus
+  `:has()`, and the indicators are inline SVG symbols generated at build time from the
+  extension's real `render.plan()` rather than drawn in a canvas at runtime. First paint
+  went from ~470 KB of assets to **6.7 KB brotli** (html + css + icon).
+- **Icons.** Added a 483-byte SVG mark generated from the same constants as the PNGs. The
+  site uses it everywhere, replacing four PNGs, and links it properly alongside a PNG
+  fallback favicon and a 180 px apple-touch-icon.
+- The Open Graph card is now a 54 KB JPEG rather than a 357 KB PNG.
+
+### Fixed
+
+- **Alignment.** Content inside full-bleed `.section--alt` blocks sat flush against the
+  left edge instead of lining up with the rest of the page. The old rule set
+  `max-width` and auto margins on each child, which any child with a `margin` shorthand
+  silently overrode — `.steps { margin: 0 }` was the one that showed. The section now
+  centres with padding, so children keep their own margins.
 
 ## [0.1.0] — 2026-07-26
 

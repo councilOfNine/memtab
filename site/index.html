@@ -8,12 +8,21 @@
       name="description"
       content="A Chrome extension that shows each tab's JavaScript memory usage as a colour on its favicon. Configurable thresholds and colours. Open source, no tracking, no network requests."
     />
+    <meta name="theme-color" content="#0f1216" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+
     <!-- PLACEHOLDER: change to the real domain before launch. A canonical pointing at
          the wrong host is worse than none at all. -->
     <link rel="canonical" href="https://memtab.example.com/" />
-    <link rel="icon" href="icons/icon-32.png" sizes="32x32" />
-    <link rel="icon" href="icons/icon-128.png" sizes="128x128" />
+
+    <!-- The stylesheet is the only render-blocking resource on the page. -->
     <link rel="stylesheet" href="styles.css" />
+
+    <!-- 483 bytes of vector, sharp at every size. The PNG is for browsers that still
+         don't take an SVG favicon. -->
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="icon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content="MemTab — see which tab is eating your memory" />
@@ -21,39 +30,42 @@
       property="og:description"
       content="Each tab's memory usage, as a colour on its favicon. Configurable thresholds and colours. Open source, no tracking."
     />
-    <meta property="og:image" content="social-card.png" />
+    <meta property="og:image" content="social-card.jpg" />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
 
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
+    <!-- Every indicator on this page is one <use> of a symbol defined here. The
+         geometry is generated at build time from the extension's own renderer, so the
+         site cannot advertise an indicator the product doesn't draw. -->
+    <svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+      <!--@symbols-->
+    </svg>
+
     <header class="nav">
       <a class="nav__brand" href="/">
-        <img src="icons/icon-48.png" alt="" width="26" height="26" />
+        <img src="icon.svg" alt="" width="26" height="26" decoding="async" />
         <span>MemTab</span>
       </a>
       <nav>
-        <a href="#try">Try it</a>
+        <a href="#see">See it</a>
         <a href="#measures">What it measures</a>
         <a href="#install">Install</a>
-        <a
-          href="https://github.com/itsmiketorres/memtab"
-          class="nav__cta"
-          rel="noopener"
-          >GitHub</a
-        >
+        <a href="https://github.com/itsmiketorres/memtab" class="nav__cta" rel="noopener">GitHub</a>
       </nav>
     </header>
 
     <main id="main">
       <!-- ── hero ───────────────────────────────────────────────── -->
       <section class="hero">
-        <div class="hero__copy">
+        <div>
           <h1>Which tab is eating your&nbsp;memory?</h1>
           <p class="lede">
-            MemTab puts a traffic light on every tab's favicon. Green while it's healthy, red when
-            it isn't — so a leaking tab announces itself instead of hiding behind thirty others.
+            MemTab puts a traffic light on every tab's favicon. Green while a tab is healthy, red
+            when it isn't — so a leaking tab announces itself instead of hiding behind thirty
+            others.
           </p>
           <div class="hero__actions">
             <a class="btn btn--primary" href="#install">Install it</a>
@@ -66,99 +78,72 @@
           </p>
         </div>
 
-        <div class="hero__demo">
-          <div class="browser" aria-hidden="true">
-            <div class="browser__chrome">
-              <span class="browser__dot"></span>
-              <span class="browser__dot"></span>
-              <span class="browser__dot"></span>
-            </div>
-            <div class="browser__tabs" id="hero-tabs"></div>
-            <div class="browser__page">
-              <div class="skeleton skeleton--title"></div>
-              <div class="skeleton"></div>
-              <div class="skeleton skeleton--short"></div>
-            </div>
+        <div class="browser" aria-hidden="true">
+          <div class="browser__chrome">
+            <span class="browser__dot"></span>
+            <span class="browser__dot"></span>
+            <span class="browser__dot"></span>
+          </div>
+          <div class="strip__row">
+            <span class="tab tab--ok"
+              ><svg class="ind" viewBox="0 0 32 32"><use href="#i-ring-ok" /></svg
+              ><span class="tab__title">Docs</span></span
+            >
+            <span class="tab tab--warn"
+              ><svg class="ind" viewBox="0 0 32 32"><use href="#i-ring-warn" /></svg
+              ><span class="tab__title">Analytics</span></span
+            >
+            <span class="tab tab--high"
+              ><svg class="ind" viewBox="0 0 32 32"><use href="#i-ring-high" /></svg
+              ><span class="tab__title">Editor</span></span
+            >
+          </div>
+          <div class="browser__page">
+            <span class="skeleton skeleton--title"></span>
+            <span class="skeleton"></span>
+            <span class="skeleton skeleton--short"></span>
           </div>
         </div>
       </section>
 
-      <!-- ── try it ─────────────────────────────────────────────── -->
-      <section class="section" id="try">
+      <!-- ── see it ─────────────────────────────────────────────── -->
+      <section class="section" id="see">
         <div class="section__head">
-          <h2>Try it right here</h2>
+          <h2>See it</h2>
           <p>
-            This is the extension's actual rendering code, running on this page. Drag the memory
-            slider and watch the tab react.
+            Pick a style and a palette. These are the extension's real shapes — the geometry is
+            taken from its renderer when this page is built.
           </p>
         </div>
 
+        <!-- The radios come before the stage so CSS can select on them. No script is
+             involved: :checked drives which variant is shown and which palette applies. -->
         <div class="demo">
-          <div class="demo__stage">
+          <fieldset class="picker">
+            <legend>Style</legend>
+            <!--@style-radios-->
+          </fieldset>
+
+          <fieldset class="picker">
+            <legend>Colours</legend>
+            <!--@palette-radios-->
+          </fieldset>
+
+          <div class="stage">
             <div class="tabstrip tabstrip--light">
               <span class="tabstrip__label">Light</span>
-              <div class="tabstrip__row" id="demo-light"></div>
+              <!--@strips-light-->
             </div>
             <div class="tabstrip tabstrip--dark">
               <span class="tabstrip__label">Dark</span>
-              <div class="tabstrip__row" id="demo-dark"></div>
-            </div>
-
-            <div class="demo__zoom">
-              <canvas id="demo-zoom" width="32" height="32" aria-hidden="true"></canvas>
-              <div class="demo__readout">
-                <strong id="demo-value">120 MB</strong>
-                <span id="demo-level">Healthy</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="demo__controls">
-            <div class="control">
-              <label for="demo-memory">Simulated memory</label>
-              <input
-                type="range"
-                id="demo-memory"
-                min="0"
-                max="1400"
-                step="10"
-                value="120"
-              />
-              <div class="control__scale"><span>0</span><span>1.4&nbsp;GB</span></div>
-            </div>
-
-            <div class="control control--split">
-              <div>
-                <label for="demo-warn">Warning above</label>
-                <span class="numfield">
-                  <input type="number" id="demo-warn" min="1" max="1400" step="10" value="250" />
-                  <span>MB</span>
-                </span>
-              </div>
-              <div>
-                <label for="demo-high">High above</label>
-                <span class="numfield">
-                  <input type="number" id="demo-high" min="1" max="1400" step="10" value="700" />
-                  <span>MB</span>
-                </span>
-              </div>
-            </div>
-
-            <div class="control">
-              <span class="control__legend" id="demo-style-label">Indicator style</span>
-              <div class="chips" id="demo-styles" role="radiogroup" aria-labelledby="demo-style-label"></div>
-            </div>
-
-            <div class="control">
-              <span class="control__legend" id="demo-palette-label">Colours</span>
-              <div class="chips" id="demo-presets" role="radiogroup" aria-labelledby="demo-palette-label"></div>
+              <!--@strips-dark-->
             </div>
           </div>
         </div>
 
         <p class="demo__note">
-          In the extension all of this lives on a proper settings page, with a two-handle slider,
-          per-level colour pickers, hex entry, and a preview against your real tab strip.
+          In the extension these live on a settings page with a two-handle threshold slider,
+          per-level colour pickers with hex entry, and a preview against your real tab strip.
         </p>
       </section>
 
@@ -277,15 +262,24 @@
           </li>
           <li>
             <h3>Open the extensions page</h3>
-            <p>Go to <code>chrome://extensions</code> and turn on <strong>Developer mode</strong> in the top right.</p>
+            <p>
+              Go to <code>chrome://extensions</code> and turn on <strong>Developer mode</strong> in
+              the top right.
+            </p>
           </li>
           <li>
             <h3>Load it</h3>
-            <p>Click <strong>Load unpacked</strong> and select the <code>src/</code> folder. That folder <em>is</em> the extension — there's no build step.</p>
+            <p>
+              Click <strong>Load unpacked</strong> and select the <code>src/</code> folder. That
+              folder <em>is</em> the extension — there's no build step.
+            </p>
           </li>
           <li>
             <h3>Set your thresholds</h3>
-            <p>Click the MemTab icon, then <strong>Settings</strong>. Tabs that were already open need one reload.</p>
+            <p>
+              Click the MemTab icon, then <strong>Settings</strong>. Tabs that were already open
+              need one reload.
+            </p>
           </li>
         </ol>
 
@@ -351,10 +345,10 @@
     </main>
 
     <footer class="footer">
-      <div class="footer__brand">
-        <img src="icons/icon-32.png" alt="" width="20" height="20" />
-        <span>MemTab</span>
-      </div>
+      <span class="footer__brand">
+        <img src="icon.svg" alt="" width="20" height="20" decoding="async" />
+        MemTab
+      </span>
       <nav class="footer__links">
         <a href="https://github.com/itsmiketorres/memtab" rel="noopener">Source</a>
         <a href="https://github.com/itsmiketorres/memtab/blob/main/PRIVACY.md" rel="noopener">Privacy</a>
@@ -363,14 +357,5 @@
         <a href="https://github.com/itsmiketorres/memtab/blob/main/LICENSE" rel="noopener">MIT</a>
       </nav>
     </footer>
-
-    <script src="shared/constants.js"></script>
-    <script src="shared/format.js"></script>
-    <script src="shared/palette.js"></script>
-    <script src="shared/settings.js"></script>
-    <script src="shared/levels.js"></script>
-    <script src="shared/measure.js"></script>
-    <script src="shared/render.js"></script>
-    <script src="demo.js"></script>
   </body>
 </html>

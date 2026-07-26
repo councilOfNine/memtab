@@ -136,10 +136,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) to get started and
 
 ## The website
 
-[`site/`](site) is the marketing page — plain HTML and CSS, no framework, no external
-requests. Its interactive demo runs the extension's *real* renderer (`src/shared/`
-is copied in at build time), so the page can't advertise an indicator the product
-doesn't draw.
+[`site/`](site) is the marketing page: HTML and CSS, **no JavaScript at all**, about 7 KB
+over the wire. The style and palette pickers are radio inputs plus `:has()`, and every
+indicator on the page is an inline SVG symbol generated at build time from the
+extension's own `render.plan()` — so the page still can't advertise an indicator the
+product doesn't draw.
 
 [docs/DEPLOY.md](docs/DEPLOY.md) covers deploying it to Cloudflare Workers Static Assets,
 including custom domains and the one case where you'd want Pages instead.

@@ -1,5 +1,13 @@
-/* MemTab marketing site. Self-contained: no fonts, scripts or images from anywhere
-   else, so the Content-Security-Policy in _headers can stay strict. */
+/*
+ * MemTab marketing site.
+ *
+ * Self-contained by design: no fonts, scripts or images from any other origin, which
+ * is what lets site/_headers ship a `default-src 'none'` Content-Security-Policy.
+ *
+ * There is no JavaScript on this page at all. The style and palette pickers are real
+ * radio inputs, and `:has()` on the container turns a checked radio into a variable
+ * change — see "the picker" near the bottom.
+ */
 
 :root {
   color-scheme: light dark;
@@ -13,6 +21,8 @@
   --accent: #2563eb;
   --accent-ink: #ffffff;
 
+  /* Overridden by the palette pickers below. Kept in sync with the extension's
+     presets by scripts/build-site.mjs, which generates the override rules. */
   --ok: #22c55e;
   --warn: #f59e0b;
   --high: #ef4444;
@@ -20,6 +30,7 @@
   --radius: 14px;
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.06);
   --wrap: 1080px;
+  --gutter: 24px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -104,6 +115,14 @@ kbd {
   padding: 1px 6px;
 }
 
+/* The symbol sprite must be in the document but never painted or measured. */
+.sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -137,7 +156,7 @@ kbd {
   gap: 20px;
   max-width: var(--wrap);
   margin-inline: auto;
-  padding: 14px 24px;
+  padding: 14px var(--gutter);
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
 }
@@ -185,27 +204,65 @@ kbd {
   }
 }
 
-/* ── hero ─────────────────────────────────────────────────────── */
+/* ── layout ───────────────────────────────────────────────────── */
+
+.hero,
+.section {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding: 72px var(--gutter);
+}
 
 .hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 56px;
   align-items: center;
-  max-width: var(--wrap);
-  margin-inline: auto;
-  padding: 64px 24px 76px;
+  padding-block: 64px 76px;
 }
 
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
     gap: 40px;
-    padding-top: 40px;
+    padding-block: 40px 56px;
   }
 }
 
-.hero h1 {
+/*
+ * Full-bleed background, content still aligned with every other section.
+ *
+ * The padding does the centring, rather than a `.section--alt > *` rule setting
+ * max-width and auto margins on each child. That earlier approach silently lost the
+ * centring for any child with a `margin` shorthand — `.steps { margin: 0 }` reset the
+ * auto margins and left the install steps hard against the left edge.
+ */
+.section--alt {
+  max-width: none;
+  background: var(--bg-alt);
+  border-block: 1px solid var(--border);
+  padding-inline: max(var(--gutter), calc((100% - var(--wrap)) / 2 + var(--gutter)));
+}
+
+.section__head {
+  max-width: 60ch;
+  margin-bottom: 34px;
+}
+
+.section__head h2 {
+  font-size: clamp(25px, 3.4vw, 33px);
+  font-weight: 680;
+}
+
+.section__head p {
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 16.5px;
+}
+
+/* ── hero copy ────────────────────────────────────────────────── */
+
+h1 {
   font-size: clamp(34px, 5.2vw, 52px);
   font-weight: 700;
 }
@@ -258,6 +315,55 @@ kbd {
   filter: brightness(1.08);
 }
 
+/* ── tabs and indicators ──────────────────────────────────────── */
+
+/*
+ * `currentColor` inside the generated symbols is what makes palette switching free:
+ * the level class sets `color`, and every shape drawn in the level colour follows.
+ */
+.ind {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.tab--ok {
+  color: var(--ok);
+}
+
+.tab--warn {
+  color: var(--warn);
+}
+
+.tab--high {
+  color: var(--high);
+}
+
+.strip__row {
+  display: flex;
+  gap: 4px;
+  padding: 4px 8px 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 9px 9px 0 0;
+  background: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tab__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #3c4043;
+}
+
 /* ── browser mock ─────────────────────────────────────────────── */
 
 .browser {
@@ -272,6 +378,14 @@ kbd {
   .browser {
     background: #202124;
   }
+
+  .browser .tab {
+    background: #35363a;
+  }
+
+  .browser .tab__title {
+    color: #e8eaed;
+  }
 }
 
 .browser__chrome {
@@ -285,12 +399,6 @@ kbd {
   height: 10px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.18);
-}
-
-.browser__tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px 8px 0;
 }
 
 .browser__page {
@@ -316,97 +424,92 @@ kbd {
   width: 65%;
 }
 
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex: 1;
-  min-width: 0;
-  padding: 7px 10px;
-  border-radius: 9px 9px 0 0;
-  background: #fff;
-  color: #3c4043;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-@media (prefers-color-scheme: dark) {
-  .tab {
-    background: #35363a;
-    color: #e8eaed;
-  }
-}
-
-.tab canvas {
-  width: 16px;
-  height: 16px;
-  flex: none;
-}
-
-.tab span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ── sections ─────────────────────────────────────────────────── */
-
-.section {
-  max-width: var(--wrap);
-  margin-inline: auto;
-  padding: 72px 24px;
-}
-
-.section--alt {
-  max-width: none;
-  background: var(--bg-alt);
-  border-block: 1px solid var(--border);
-}
-
-/* Keeps the 404 page from collapsing to a thin strip. A class rather than an inline
-   style attribute, which the site's own Content-Security-Policy would block. */
-.section--tall {
-  min-height: 48vh;
-}
-
-.section--alt > * {
-  max-width: var(--wrap);
-  margin-inline: auto;
-}
-
-.section__head {
-  max-width: 60ch;
-  margin-bottom: 34px;
-}
-
-.section__head h2 {
-  font-size: clamp(25px, 3.4vw, 33px);
-  font-weight: 680;
-}
-
-.section__head p {
-  margin-top: 12px;
-  color: var(--text-dim);
-  font-size: 16.5px;
-}
-
-/* ── demo ─────────────────────────────────────────────────────── */
+/* ── the picker (pure CSS, no script) ─────────────────────────── */
 
 .demo {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 26px;
-  align-items: start;
+  gap: 18px;
 }
 
-@media (max-width: 860px) {
-  .demo {
+.picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.picker legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+  font-size: 13.5px;
+  font-weight: 570;
+}
+
+/* The radio itself is hidden from sight but stays focusable and announced. */
+.picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.picker label:hover {
+  border-color: var(--accent);
+}
+
+.picker input:checked + label {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.picker input:focus-visible + label {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.swatches {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.swatches i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+}
+
+/* ── stage ────────────────────────────────────────────────────── */
+
+.stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 720px) {
+  .stage {
     grid-template-columns: 1fr;
   }
-}
-
-.demo__stage {
-  display: grid;
-  gap: 12px;
 }
 
 .tabstrip {
@@ -427,159 +530,37 @@ kbd {
   border-bottom: 1px solid var(--border);
 }
 
-.tabstrip__row {
-  display: flex;
-  gap: 4px;
+.variant {
+  display: none;
   padding: 9px 9px 10px;
 }
 
-.tabstrip--light .tabstrip__row {
+.tabstrip--light .variant {
   background: #dee1e6;
 }
 
-.tabstrip--dark .tabstrip__row {
+.tabstrip--dark .variant {
   background: #202124;
-}
-
-.tabstrip--light .tab {
-  background: #fff;
-  color: #3c4043;
 }
 
 .tabstrip--dark .tab {
   background: #35363a;
+}
+
+.tabstrip--dark .tab__title {
   color: #e8eaed;
 }
 
-.demo__zoom {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-}
-
-.demo__zoom canvas {
-  width: 60px;
-  height: 60px;
-  flex: none;
-  image-rendering: pixelated;
-}
-
-.demo__readout {
-  display: grid;
-}
-
-.demo__readout strong {
-  font-size: 25px;
-  font-weight: 660;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-}
-
-.demo__readout span {
-  color: var(--text-dim);
-  font-size: 14px;
-}
-
-.demo__controls {
-  display: grid;
-  gap: 20px;
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--surface);
-}
-
-.control label,
-.control__legend {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13.5px;
-  font-weight: 570;
-}
-
-.control--split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.control__scale {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--text-dim);
-}
-
-input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
-.numfield {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.numfield input {
-  width: 78px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-alt);
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-alt);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.chip:hover {
-  border-color: var(--accent);
-}
-
-.chip[aria-checked='true'] {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.chip__dots {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.chip__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
-}
+/*
+ * Which variant is visible, and which palette is in force, are both decided by a
+ * checked radio. `:has()` is what makes this possible without script — the container
+ * matches on the state of a descendant input.
+ *
+ * The rules below this point are generated by scripts/build-site.mjs from the
+ * extension's own STYLES list and colour presets, so the site cannot offer a style
+ * the extension doesn't have or a palette whose colours have drifted.
+ */
+/*@generated-pickers*/
 
 .demo__note {
   margin-top: 22px;
@@ -745,6 +726,12 @@ input[type='range'] {
   font-size: 14.8px;
 }
 
+/* ── 404 ──────────────────────────────────────────────────────── */
+
+.section--tall {
+  min-height: 48vh;
+}
+
 /* ── footer ───────────────────────────────────────────────────── */
 
 .footer {
@@ -755,7 +742,7 @@ input[type='range'] {
   gap: 16px;
   max-width: var(--wrap);
   margin-inline: auto;
-  padding: 34px 24px 54px;
+  padding: 34px var(--gutter) 54px;
   border-top: 1px solid var(--border);
   color: var(--text-dim);
   font-size: 14px;
