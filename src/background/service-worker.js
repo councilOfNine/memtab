@@ -180,6 +180,33 @@ async function evictIfNeeded() {
   await chrome.storage.session.remove(keys.slice(0, Math.ceil(ICON_CACHE_LIMIT / 4)));
 }
 
+/**
+ * What favicon is Chrome actually showing for this tab?
+ *
+ * The content script uses this to find out whether the favicon it applied was accepted.
+ * Nothing in the page can report that: when a page's CSP `img-src` rejects the
+ * generated icon, Blink drops the update silently — no exception, no error event. And
+ * it cannot be probed for either, because a content script's own image loads run in the
+ * isolated world, which Chrome exempts from the page's CSP. Reading the tab's real
+ * favicon back is the only honest signal.
+ */
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || message.type !== constants.MSG.GET_TAB_ICON) return undefined;
+
+  const tabId = sender && sender.tab && sender.tab.id;
+  if (tabId === undefined) {
+    sendResponse({ favIconUrl: null });
+    return undefined;
+  }
+
+  chrome.tabs
+    .get(tabId)
+    .then((tab) => sendResponse({ favIconUrl: tab.favIconUrl || null }))
+    .catch(() => sendResponse({ favIconUrl: null }));
+
+  return true;
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || message.type !== constants.MSG.GET_FALLBACK_ICON) return undefined;
 

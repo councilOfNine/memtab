@@ -11,6 +11,21 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Added
 
+- **Browser smoke test** (`npm run test:e2e`) — loads the real extension into a real
+  Chrome over the DevTools Protocol and asserts it composites a 32×32 favicon, wins
+  against a page that rewrites its own, falls back to the badge under a strict CSP,
+  handles a page with no favicon, propagates a settings change to an open tab, and
+  restores the original icon when disabled. Zero dependencies: Node 22's global
+  `WebSocket` is all a CDP client needs. Note `--load-extension` is silently ignored by
+  current Chrome, so the extension is installed via CDP `Extensions.loadUnpacked`.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — the plan to get live on each store, with
+  Firefox and Safari ruled out on technical grounds rather than left ambiguous.
+- **`npm run preflight`** — every mechanical check plus the human to-do list.
+- **Tagged releases** (`.github/workflows/release.yml`) with SHA256SUMS and a build
+  provenance attestation.
+- **Edge readiness**: browser-neutral UI wording (Edge policy forbids referencing other
+  browsers), the Edge store's 300×300 logo, and the Edge add-ons site added to the
+  popup's restricted-page list.
 - **Marketing site** in [`site/`](site) — a static page with an interactive demo that
   runs the extension's real renderer rather than a mock-up, so it can't drift from the
   product. `npm run build:site`, deployed to Cloudflare Workers Static Assets via
@@ -40,6 +55,16 @@ manifest, and `npm run lint` fails if the two disagree.
 - The Open Graph card is now a 54 KB JPEG rather than a 357 KB PNG.
 
 ### Fixed
+
+- **The CSP fallback never triggered.** MemTab probed for `data:` image support by
+  loading one and watching for an error — but a content script's own loads run in the
+  isolated world, which Chrome exempts from the page's CSP, so the probe passed on
+  exactly the pages it was meant to catch. MemTab then applied a favicon the browser
+  silently ignored, and the corner badge never appeared. It now applies the icon and
+  asks the browser what the tab is actually showing, which is real signal and also
+  catches any other reason an icon didn't stick. Found by the new browser test.
+- **`npm run build` destroyed the generated store assets.** It cleared the whole `dist/`
+  directory, which it shares with the site build and the store-asset generator.
 
 - **Alignment.** Content inside full-bleed `.section--alt` blocks sat flush against the
   left edge instead of lining up with the rest of the page. The old rule set

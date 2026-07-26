@@ -227,6 +227,36 @@ Worth knowing which of these apply to MemTab:
 
 ---
 
+## Microsoft Edge Add-ons
+
+Edge is free, Chromium, and takes the same package unmodified. The full plan is in
+[ROADMAP.md](ROADMAP.md#phase-2--microsoft-edge-add-ons); the differences from Chrome
+that matter while you're in the form:
+
+| | Chrome | Edge |
+| --- | --- | --- |
+| Registration fee | one-time | **free** |
+| Store logo | 128×128 | **300×300** (`store/assets/edge-logo-300.png`) |
+| Description | no documented limit | **250–10,000 characters** |
+| Screenshots | 1280×800 or 640×400, max 5 | 1280×800 or 640×480, **max 6** |
+| Promo tiles | 440×280, 1400×560 | same sizes |
+| Name / summary | from the manifest | from the manifest (read-only in Partner Center) |
+| Review | days → weeks | **≤ 7 business days** |
+
+Two Edge-specific things:
+
+- **Do not reference other browsers in the UI.** Edge developer policy 1.1.2 forbids it,
+  and policy 1.5.2 says the privacy policy should primarily refer to Edge. MemTab's UI is
+  already browser-neutral for this reason.
+- **Verify the `favicon` permission works on Edge before you register.** It is not in
+  Microsoft's documented permission list. Sideload the package via `edge://extensions`
+  and confirm a site with a CDN-hosted favicon still composites correctly.
+
+The single-purpose statement, permission justifications and remote-code answer are the
+same as Chrome's — reuse [`store/listing/`](../store/listing).
+
+---
+
 ## 7. Submit, and wait
 
 Review time is officially *"a few days, but it can take up to a few weeks"* — and the

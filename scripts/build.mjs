@@ -14,7 +14,7 @@
  */
 
 import { deflateRawSync } from 'node:zlib';
-import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, cpSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,7 +29,14 @@ const DOS_DATE = 33; // (1980-1980)<<9 | 1<<5 | 1
 
 const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 
-rmSync(DIST, { recursive: true, force: true });
+// Clear only what this script owns. `dist/` is shared with the site build and the
+// store-asset generator, and wiping the whole directory quietly destroyed images that
+// take a headless browser to regenerate.
+rmSync(STAGE, { recursive: true, force: true });
+for (const entry of existsSync(DIST) ? readdirSync(DIST) : []) {
+  if (/^memtab-.*\.zip$/.test(entry)) rmSync(join(DIST, entry), { force: true });
+}
+
 mkdirSync(STAGE, { recursive: true });
 cpSync(SRC, STAGE, { recursive: true });
 

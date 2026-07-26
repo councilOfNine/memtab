@@ -16,6 +16,17 @@
 
   const LEVEL_LABEL = { ok: 'Healthy', warn: 'Warning', high: 'High' };
 
+  /**
+   * Extension stores block content scripts on their own pages. Edge's store needs to be
+   * here as well as Chrome's — MemTab runs on Edge, where landing on the add-ons site
+   * and seeing nothing would look like a bug.
+   */
+  const RESTRICTED_STORE_HOSTS = [
+    /(^|\.)chromewebstore\.google\.com$/,
+    /(^|\.)chrome\.google\.com$/,
+    /(^|\.)microsoftedge\.microsoft\.com$/,
+  ];
+
   /** Pages where content scripts are forbidden, so MemTab can never run. */
   function restrictedReason(url) {
     if (!url) return 'This page is not accessible to extensions.';
@@ -27,7 +38,7 @@
     }
 
     if (parsed.protocol === 'chrome:' || parsed.protocol === 'chrome-untrusted:') {
-      return 'Chrome forbids extensions from running on its own pages.';
+      return 'Extensions are not allowed to run on the browser\u2019s own pages.';
     }
     if (parsed.protocol === 'chrome-extension:') {
       return 'This is an extension page. MemTab does not run on other extensions.';
@@ -36,10 +47,10 @@
       return 'MemTab does not run on this kind of page.';
     }
     if (parsed.protocol === 'file:') {
-      return 'MemTab needs "Allow access to file URLs" enabled on its entry in chrome://extensions.';
+      return 'MemTab needs "Allow access to file URLs" enabled on its entry in the extensions page.';
     }
-    if (/(^|\.)chromewebstore\.google\.com$/.test(parsed.hostname) || /(^|\.)chrome\.google\.com$/.test(parsed.hostname)) {
-      return 'Chrome forbids extensions from running on the Web Store.';
+    if (RESTRICTED_STORE_HOSTS.some((re) => re.test(parsed.hostname))) {
+      return 'Extensions are not allowed to run on the extension store.';
     }
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
       return 'MemTab only runs on http and https pages.';
@@ -140,7 +151,7 @@
 
     if (!info || !info.supported) {
       $('level-label').textContent = 'Unavailable';
-      showState('Chrome is not exposing performance.memory on this page, so there is nothing to read.');
+      showState('This page is not exposing performance.memory, so there is nothing to read.');
       wireFooter(settings, origin);
       return;
     }
@@ -156,7 +167,7 @@
 
     if (info.bucketized) {
       note(
-        'Chrome is reporting coarse, bucketed values on this page (site isolation is off), so the number is approximate and updates slowly.',
+        'The browser is reporting coarse, bucketed values on this page (site isolation is off), so the number is approximate and updates slowly.',
         true
       );
     }
@@ -169,7 +180,7 @@
       );
     }
     if (info.stale && info.hidden) {
-      note('This tab has been in the background, where Chrome slows timers to about one per minute. The reading may be old.');
+      note('This tab has been in the background, where timers are slowed to about one per minute. The reading may be old.');
     }
     note('This is the JavaScript heap for the renderer serving this site — shared with other tabs on the same site, and smaller than the tab’s real memory.');
 
