@@ -41,7 +41,7 @@
     /** The page's own icon links, so we can put them back on teardown. */
     originals: [],
     originalsCaptured: false,
-    /** false when the page's CSP refuses data: images — see probeDataUrls(). */
+    /** false once we've confirmed the page refuses our favicon — see verifyIconRoute(). */
     canUseDataUrls: null,
     bucketized: false,
     timer: null,
@@ -368,29 +368,44 @@
   }
 
   /**
-   * Does this page's CSP allow `data:` images?
+   * Did the favicon we applied actually take effect?
    *
-   * Blink runs the favicon link through the DOCUMENT's `img-src` — an isolated world
-   * does not get its own policy — and on failure it simply never sends the update.
-   * No exception, no console error, no visible change. Since plenty of sites ship
-   * `img-src 'self'`, MemTab has to find out for itself, once, before it assumes the
-   * indicator is working.
+   * Blink runs the favicon link through the DOCUMENT's `img-src`, and when that fails it
+   * simply never sends the update: no exception, no error event, no visible change. So
+   * on a site shipping `img-src 'self'` the indicator is silently dead.
+   *
+   * This cannot be probed for. An earlier version loaded a 1x1 `data:` image and checked
+   * for an error — but a content script's own loads run in the isolated world, which
+   * Chrome exempts from the page's CSP, so the probe passed on exactly the pages it was
+   * meant to catch. Appending the image to the document first doesn't help either; the
+   * exemption follows the world, not the element. (Both were verified against a fixture
+   * page in test-e2e/.)
+   *
+   * Asking the browser what favicon the tab is actually showing is the only honest
+   * signal, and it has the side benefit of catching any other reason an icon didn't
+   * stick, not just CSP.
    */
-  function probeDataUrls() {
-    return new Promise((resolve) => {
-      const img = new Image();
-      let settled = false;
-      const done = (value) => {
-        if (settled) return;
-        settled = true;
-        resolve(value);
-      };
-      img.onload = () => done(true);
-      img.onerror = () => done(false);
-      img.src = constants.PROBE_PNG;
-      // Decoding a 1x1 is immediate; this only guards against a load that never settles.
-      setTimeout(() => done(false), 1500);
-    });
+  async function confirmIconApplied() {
+    if (!state.currentHref || !contextAlive()) return true;
+
+    // Chrome needs a moment to process the favicon update and a couple of retries to
+    // cover a slow first paint. Three attempts at 500ms is comfortably enough without
+    // leaving a wrong indicator up for long.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (state.stopped) return true;
+
+      let response;
+      try {
+        response = await chrome.runtime.sendMessage({ type: MSG.GET_TAB_ICON });
+      } catch {
+        return true; // Can't tell — don't downgrade a working page on a messaging blip.
+      }
+
+      if (response && response.favIconUrl === state.currentHref) return true;
+    }
+
+    return false;
   }
 
   // --- badge fallback -------------------------------------------------------
@@ -531,8 +546,7 @@
    *
    * Memoizes the *promise*, not a boolean. A boolean flag set before the awaits below
    * would let a concurrent caller — `reconfigure()`, triggered by a settings change
-   * while the page is still loading — return immediately with `canUseDataUrls` still
-   * null, latch a level, and never re-evaluate once the probe landed.
+   * while the page is still loading — return immediately with half-finished state.
    */
   function initialize() {
     if (!state.initPromise) state.initPromise = runInitialize();
@@ -545,11 +559,12 @@
     captureOriginals();
     startObserver();
 
-    const [canUseDataUrls] = await Promise.all([probeDataUrls(), detectBucketized()]);
-    state.canUseDataUrls = canUseDataUrls;
-    if (!canUseDataUrls) {
-      log("this page's CSP blocks data: images; using the corner badge instead");
-    }
+    // Assume the favicon route works; verifyIconRoute() downgrades us if it didn't.
+    // Optimistic is the right default — it is correct on the overwhelming majority of
+    // pages, and being wrong costs one repaint rather than a delayed first indicator.
+    state.canUseDataUrls = true;
+
+    await detectBucketized();
 
     document.addEventListener('visibilitychange', onVisibilityChange);
 
@@ -579,6 +594,24 @@
 
     tick();
     schedule();
+
+    verifyIconRoute();
+  }
+
+  /**
+   * Check once, after the first icon is applied, that it actually took — and switch to
+   * the corner badge if it didn't. Fire-and-forget: the poll loop is already running.
+   */
+  async function verifyIconRoute() {
+    if (state.stopped || state.canUseDataUrls === false) return;
+
+    const applied = await confirmIconApplied();
+    if (applied || state.stopped) return;
+
+    log("this page refused the generated favicon (CSP img-src); using the corner badge");
+    state.canUseDataUrls = false;
+    restoreOriginal();
+    if (state.level) applyLevel(state.level, { force: true });
   }
 
   // Settings changes fan out to every open tab through storage, with no messaging.

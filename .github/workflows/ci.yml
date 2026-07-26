@@ -37,6 +37,23 @@ jobs:
       - name: Unit tests
         run: npm test
 
+  # Loads the real extension into a real Chrome over the DevTools Protocol and checks
+  # it actually works. This is the only job that can catch the failures that matter
+  # most — a favicon that never applies, a service worker that throws on startup — and
+  # they are exactly what a store reviewer would reject for.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Browser smoke test
+        run: npm run test:e2e
+
   build:
     runs-on: ubuntu-latest
     needs: check

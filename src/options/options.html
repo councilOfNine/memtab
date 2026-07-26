@@ -187,7 +187,7 @@
 
         <h3 class="subhead">Preview</h3>
         <p class="card__hint">
-          Shown at the size Chrome actually paints in the tab strip (16&nbsp;px), and enlarged.
+          Shown at the size the tab strip actually paints (16&nbsp;px), and enlarged.
           The tab strip follows your browser theme, so both are shown.
         </p>
 
@@ -231,7 +231,7 @@
             <p class="row__hint">
               While the tab is in the foreground. Anything under a second is refused — a tight
               poll costs more than it measures, and marks the tab as CPU-intensive, which makes
-              Chrome more likely to freeze it.
+              the browser more likely to freeze it.
             </p>
           </div>
 
@@ -242,7 +242,7 @@
               <span class="numfield__unit">seconds</span>
             </span>
             <p class="row__hint">
-              Chrome throttles hidden tabs to roughly one timer fire per minute after five
+              Hidden tabs are throttled to roughly one timer fire per minute after five
               minutes, so lower values here have little effect.
             </p>
           </div>
@@ -335,7 +335,7 @@
         </div>
 
         <p>
-          The only per-page memory figure a Chrome extension can read on the stable channel is
+          The only per-page memory figure an extension can read on the stable channel is
           <code>performance.memory</code>. It reports the V8 JavaScript heap for the
           <em>renderer process</em> serving the page. Three consequences worth knowing:
         </p>
@@ -344,15 +344,15 @@
           <li>
             <strong>It is not the tab's total memory.</strong> It excludes the DOM, images,
             decoded bitmaps, canvas and the compositor — usually most of what a tab really costs.
-            Chrome's own Task Manager (<kbd>Shift</kbd>+<kbd>Esc</kbd>) shows the real figure.
+            The browser's own Task Manager (<kbd>Shift</kbd>+<kbd>Esc</kbd>) shows the real figure.
           </li>
           <li>
-            <strong>Tabs on the same site share it.</strong> Chrome puts same-site tabs in one
+            <strong>Tabs on the same site share it.</strong> Same-site tabs are put in one
             renderer process, and they share one JavaScript heap — so ten GitHub tabs will all
             show the same reading, and all turn red together if one of them leaks.
           </li>
           <li>
-            <strong>Background tabs update slowly.</strong> Chrome throttles hidden tabs to about
+            <strong>Background tabs update slowly.</strong> Hidden tabs are throttled to about
             one timer fire per minute, and may freeze or discard them entirely. A background tab's
             colour can be minutes old.
           </li>

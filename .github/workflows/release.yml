@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build a release for
+        required: true
+
+permissions:
+  contents: write
+  # Both needed by attest-build-provenance, which lets anyone verify that the zip on
+  # the release was built from this repo by this workflow.
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check
+        run: npm run check
+
+      - name: Verify the tag matches package.json
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $TAG does not match package.json version $PKG"
+            exit 1
+          fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Check the build is reproducible
+        run: |
+          mv dist/memtab-*.zip /tmp/first.zip
+          npm run build
+          cmp /tmp/first.zip dist/memtab-*.zip \
+            || { echo "::error::two builds of the same commit differ"; exit 1; }
+
+      - name: Checksum
+        working-directory: dist
+        run: sha256sum memtab-*.zip | tee SHA256SUMS
+
+      # Lets a user run `gh attestation verify dist/memtab-X.Y.Z.zip --repo <owner>/memtab`
+      # and get a cryptographic answer to "was this built from the tagged source?".
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/memtab-*.zip
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            dist/memtab-*.zip dist/SHA256SUMS \
+            --title "$TAG" \
+            --notes "$(cat <<'NOTES'
+          See [CHANGELOG.md](https://github.com/itsmiketorres/memtab/blob/main/CHANGELOG.md).
+
+          `memtab-*.zip` is the exact package uploaded to the extension stores. The build is
+          deterministic, so you can rebuild this tag and get identical bytes:
+
+          ```
+          npm run build && sha256sum dist/memtab-*.zip
+          ```
+
+          Or verify the provenance attestation directly:
+
+          ```
+          gh attestation verify memtab-*.zip --repo itsmiketorres/memtab
+          ```
+          NOTES
+          )" \
+            --verify-tag

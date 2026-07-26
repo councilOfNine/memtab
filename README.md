@@ -129,7 +129,9 @@ entries — so two builds of the same commit are byte-identical.
 | `npm run build:site` | Marketing site into `dist/site/` |
 | `npm run deploy:site` | Build the site and deploy it to Cloudflare |
 | `npm run store-assets` | Chrome Web Store screenshots and promo tiles (needs Chrome) |
-| `npm run icons` | Regenerate the extension icons from `scripts/make-icons.mjs` |
+| `npm run test:e2e` | Load the real extension in real Chrome and check it works |
+| `npm run preflight` | Every mechanical check, plus what's still waiting on you |
+| `npm run icons` | Regenerate the extension icons and store logos |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) to get started and
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it fits together.
@@ -147,8 +149,17 @@ including custom domains and the one case where you'd want Pages instead.
 
 ## Publishing
 
-[docs/PUBLISHING.md](docs/PUBLISHING.md) is the full Chrome Web Store playbook: account
-setup, the exact asset sizes, what gets extensions rejected, and the review process.
+**[docs/ROADMAP.md](docs/ROADMAP.md)** is the plan for getting live: which stores are
+worth shipping to, what's already automated, and what needs a person. `npm run preflight`
+runs every mechanical check and prints the rest.
+
+[docs/PUBLISHING.md](docs/PUBLISHING.md) is the step-by-step for the Chrome Web Store and
+Edge Add-ons: account setup, exact asset sizes, what gets extensions rejected, and the
+review process.
+
+Firefox and Safari are not on the list, and that's a hard technical limit rather than a
+backlog item — `performance.memory` does not exist in either engine. The reasoning is in
+the roadmap.
 
 The listing copy is written and lives in [`store/listing/`](store/listing) — description,
 single-purpose statement, and a justification for every permission. `npm run lint` checks

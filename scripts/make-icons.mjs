@@ -31,6 +31,13 @@ const SIZES = [16, 32, 48, 128];
  * package, which has no use for it.
  */
 const APPLE_TOUCH_SIZE = 180;
+
+/**
+ * Microsoft Edge Add-ons requires a 1:1 store logo, recommended 300x300. Chrome only
+ * asks for 128x128, so this exists purely for the Edge listing and is written to
+ * store/ rather than into either package.
+ */
+const EDGE_LOGO_SIZE = 300;
 const SS = 4; // supersampling factor per axis
 
 // The mark: a segmented traffic-light ring (the indicator) wrapped around a rounded
@@ -261,3 +268,9 @@ mkdirSync(SITE_DIR, { recursive: true });
 const applePath = join(SITE_DIR, 'apple-touch-icon.png');
 writeFileSync(applePath, encodePng(APPLE_TOUCH_SIZE, render(APPLE_TOUCH_SIZE)));
 console.log(`wrote ${applePath}`);
+
+const STORE_DIR = join(ROOT, 'store', 'assets');
+mkdirSync(STORE_DIR, { recursive: true });
+const edgePath = join(STORE_DIR, 'edge-logo-300.png');
+writeFileSync(edgePath, encodePng(EDGE_LOGO_SIZE, render(EDGE_LOGO_SIZE)));
+console.log(`wrote ${edgePath}`);

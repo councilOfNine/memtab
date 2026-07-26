@@ -23,7 +23,9 @@
     "deploy:site": "npm run build:site && npx wrangler@latest deploy",
     "icons": "node scripts/make-icons.mjs",
     "store-assets": "node scripts/make-store-assets.mjs",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test",
+    "test:e2e": "node --test 'test-e2e/**/*.test.mjs'",
+    "preflight": "node scripts/preflight.mjs"
   },
   "keywords": [
     "chrome-extension",

@@ -70,6 +70,8 @@
     MSG: {
       GET_FALLBACK_ICON: 'memtab:get-fallback-icon',
       GET_READING: 'memtab:get-reading',
+      /** Asks the worker what favicon Chrome currently shows for the calling tab. */
+      GET_TAB_ICON: 'memtab:get-tab-icon',
     },
 
     /** 1x1 transparent PNG, used to probe whether a page's CSP allows data: images. */
