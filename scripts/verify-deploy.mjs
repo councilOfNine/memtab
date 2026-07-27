@@ -15,28 +15,84 @@
  */
 
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
-const url = process.argv[2];
+const args = process.argv.slice(2);
+const flag = (name) => {
+  const i = args.indexOf(name);
+  return i === -1 ? null : args[i + 1];
+};
+
+const url = args.find((a) => a.startsWith('http'));
 if (!url) {
-  console.error('usage: node scripts/verify-deploy.mjs <url>');
+  console.error(
+    'usage: node scripts/verify-deploy.mjs <url> [--expect-built <index.html>] [--wait <seconds>]'
+  );
   process.exit(2);
+}
+
+/*
+ * --expect-built turns this from "the live page is internally consistent" into "the live
+ * page is *this* build". Cloudflare deploys from its own Git integration, so a failed or
+ * skipped build leaves the previous version serving happily — every internal check still
+ * passes, and the only symptom is that a merge did nothing. Comparing against the hash of
+ * the locally built HTML is what makes that visible.
+ *
+ * --wait polls, because a deploy is not instant and the alternative is a fixed sleep long
+ * enough to be slow and short enough to still be flaky.
+ */
+const expectBuilt = flag('--expect-built');
+const waitSeconds = Number(flag('--wait') || 0);
+
+const hashOf = (source) => `sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}`;
+const inlineScriptsIn = (html) =>
+  [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+
+let expectedHashes = null;
+if (expectBuilt) {
+  expectedHashes = inlineScriptsIn(readFileSync(expectBuilt, 'utf8')).map(hashOf);
+  console.log(`\nexpecting ${expectedHashes.length} script hash(es) from ${expectBuilt}`);
+  for (const hash of expectedHashes) console.log(`  ${hash}`);
+}
+
+const deadline = Date.now() + waitSeconds * 1000;
+let response;
+let html;
+let csp;
+
+for (;;) {
+  response = await fetch(url, { cache: 'no-store', redirect: 'follow' });
+  html = response.ok ? await response.text() : '';
+  csp = response.headers.get('content-security-policy') || '';
+
+  const landed =
+    response.ok && (!expectedHashes || expectedHashes.every((hash) => csp.includes(hash)));
+
+  if (landed || Date.now() >= deadline) break;
+
+  console.log(`  waiting for the deploy to land… (${Math.round((deadline - Date.now()) / 1000)}s left)`);
+  await new Promise((resolve) => setTimeout(resolve, 10_000));
+}
+
+if (!response.ok) {
+  console.error(`${url} returned ${response.status}`);
+  process.exit(1);
 }
 
 const problems = [];
 const warnings = [];
 const note = (message) => console.log(`  ${message}`);
 
-const response = await fetch(url, { cache: 'no-store', redirect: 'follow' });
-if (!response.ok) {
-  console.error(`${url} returned ${response.status}`);
-  process.exit(1);
-}
-
-const html = await response.text();
-const csp = response.headers.get('content-security-policy') || '';
-
 console.log(`\n${url} — ${response.status}\n`);
 note(`csp: ${csp || '(none)'}`);
+
+for (const hash of expectedHashes || []) {
+  if (!csp.includes(hash)) {
+    problems.push(
+      `the live CSP does not contain ${hash} from the local build — the deploy did not land`
+    );
+  }
+}
 
 if (!csp) problems.push('no Content-Security-Policy header');
 if (csp.includes('@script-hashes@')) {
@@ -51,7 +107,7 @@ if (/'unsafe-inline'|'unsafe-eval'|https?:|\*/.test(scriptSrc)) {
 // Nothing may load a script over the network, hashed or not.
 if (/<script[^>]*\ssrc=/.test(html)) problems.push('the page loads an external script');
 
-const inline = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+const inline = inlineScriptsIn(html);
 
 /*
  * Cloudflare's Bot Fight Mode and JS Detections append their own inline script to every
@@ -71,7 +127,7 @@ const injected = inline.filter(isCloudflareInjected);
 note(`inline scripts: ${ours.length} ours, ${injected.length} injected by Cloudflare`);
 
 for (const [i, source] of ours.entries()) {
-  const hash = `sha256-${createHash('sha256').update(source, 'utf8').digest('base64')}`;
+  const hash = hashOf(source);
   if (csp.includes(hash)) {
     note(`  #${i + 1} ${hash} — allowed by the CSP`);
   } else {

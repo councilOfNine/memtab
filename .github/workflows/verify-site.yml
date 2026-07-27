@@ -1,0 +1,53 @@
+name: Verify site
+
+# Cloudflare's Git integration owns the deploy: merging to main triggers a Workers Build
+# which runs `npm run build:site` and `wrangler deploy`. This workflow does not deploy —
+# two deploy paths would race — it checks that the deploy actually happened and that what
+# went live is what this commit builds.
+#
+# That distinction matters here. A Workers Build that fails leaves the previous version
+# serving perfectly well, so the only symptom of a broken deploy is that a merge silently
+# changed nothing. Comparing the live CSP against the locally built script hash is what
+# turns that into a red X.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'src/icons/**'
+      - 'src/shared/**'
+      - 'scripts/build-site.mjs'
+      - 'scripts/verify-deploy.mjs'
+      - 'scripts/lib/plan-to-svg.mjs'
+      - 'wrangler.jsonc'
+      - '.github/workflows/verify-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-site
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Build the site locally
+        run: npm run build:site
+
+      # Polls rather than sleeping a fixed amount: a Workers Build takes a variable
+      # minute or two, and a fixed sleep is either slow or flaky.
+      - name: Wait for the deploy, then verify it
+        run: |
+          node scripts/verify-deploy.mjs https://memtab.fixit.works/ \
+            --expect-built dist/site/index.html \
+            --wait 300

@@ -100,47 +100,44 @@ npx wrangler@latest dev
 
 ## Automatic deploys
 
-Merging a PR into `main` deploys the site. That's
-[`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml): it runs
-`npm run lint && npm test`, builds, deploys with `wrangler-action`, then verifies the
-live response.
+Merging to `main` deploys the site. **Cloudflare's Git integration owns the deploy** —
+Workers Builds watches the repo, runs the build command, and runs `wrangler deploy`. It
+reports back to GitHub as a `Workers Builds: memtab-site` check on each PR.
 
-It only fires when something that affects the site changed (`site/`, the icons, the
-shared renderer, the build script, `wrangler.jsonc`), so an extension-only or docs-only
-merge doesn't redeploy an identical page. `workflow_dispatch` covers redeploying without
-an empty commit — after a cache purge, say. Concurrency is pinned to one deploy at a
-time and queued rather than cancelled, so `main` and the live site can't disagree.
+Connect it at Dashboard → Workers & Pages → `memtab-site` → Settings → **Builds**:
 
-### One-time setup
-
-The workflow needs two repository secrets — Settings → Secrets and variables → Actions:
-
-| Secret | Where it comes from |
+| Setting | Value |
 | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | My Profile → API Tokens → Create Token → **Edit Cloudflare Workers** |
-| `CLOUDFLARE_ACCOUNT_ID` | Workers & Pages → right sidebar, or `npx wrangler whoami` |
+| Build command | `npm run build:site` |
+| Deploy command | `npx wrangler deploy` (the default) |
+| Root directory | leave empty |
 
-Scope the token to this account and the `fixit.works` zone. It needs Workers Scripts
-edit; a global API key works but grants far more than a deploy needs.
+**The build command is the one that gets missed.** Leave it empty and Cloudflare skips
+straight to `wrangler deploy`, `dist/site/` was never generated, and the build fails with
+the assets directory not existing. There is no "build output directory" field on
+Workers — that's `assets.directory` in `wrangler.jsonc`, already `./dist/site`.
 
-The workflow also references a `production` environment, which GitHub creates on first
-run. Adding required reviewers to it turns every deploy into an approval gate, which is
-worth doing if the site ever carries more than marketing copy.
+### Why CI does not also deploy
 
-### Why not Cloudflare's own Git integration
+Only one thing should deploy. Two deploy paths race and double every merge, so
+[`.github/workflows/verify-site.yml`](../.github/workflows/verify-site.yml) deliberately
+does **not** deploy. It builds the site locally, then polls the live URL until the CSP
+contains the script hash that this commit produces:
 
-Dashboard → Workers & Pages → Create → **Import a repository** also works, with build
-command `npm run build:site`. It's fewer moving parts and needs no secrets in GitHub.
+```bash
+node scripts/verify-deploy.mjs https://memtab.fixit.works/ \
+  --expect-built dist/site/index.html --wait 300
+```
 
-It's not what this repo uses because it deploys whatever lands on the branch — it has no
-notion of the test suite, so a commit that breaks the renderer still ships. The Actions
-workflow gates on `npm run lint && npm test` first and checks the result afterwards.
+That check exists because of how this fails in practice. A Workers Build that fails
+leaves the *previous* version serving perfectly well — every header is right, every
+internal check passes, and the only symptom is that merging changed nothing. Comparing
+the live CSP against the locally built hash is what turns a silent no-op into a red X.
 
-**Pick one, not both.** With the Git integration connected *and* this workflow enabled,
-every merge deploys twice, and the two race.
-
-There is no "build output directory" field on Workers — that's `assets.directory` in
-`wrangler.jsonc`, already set to `./dist/site`.
+The trade-off worth knowing: Workers Builds deploys whatever lands on the branch and has
+no notion of the test suite, so a commit that breaks the renderer ships and *then* fails
+verification. Branch protection requiring the `check` jobs to pass before merge is what
+closes that gap, rather than moving the deploy into Actions.
 
 ## Custom domain
 

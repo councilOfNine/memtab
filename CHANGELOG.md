@@ -36,9 +36,12 @@ manifest, and `npm run lint` fails if the two disagree.
   different build steps and can drift; nothing else notices, because the symptom is a
   script silently refused in the browser. Cloudflare's injected challenge-platform
   script is excluded from that check and reported as a warning instead.
-- **Automatic deploys** (`.github/workflows/deploy-site.yml`) — merging to `main`
-  lints, tests, builds, deploys to Cloudflare and verifies the live response. Path-
-  filtered so unrelated merges don't redeploy, and serialised so two deploys can't race.
+  `--expect-built dist/site/index.html --wait 300` additionally proves the deploy landed.
+- **Post-deploy verification** (`.github/workflows/verify-site.yml`) — Cloudflare's Git
+  integration owns the deploy; this builds the same commit and polls the live site until
+  its CSP carries that build's script hash. A failed Workers Build leaves the previous
+  version serving perfectly well, so without this the only symptom of a broken deploy is
+  that merging silently changed nothing.
 - A GitHub mark on the "Open the repository" button.
 - **Browser smoke test** (`npm run test:e2e`) — loads the real extension into a real
   Chrome over the DevTools Protocol and asserts it composites a 32×32 favicon, wins
