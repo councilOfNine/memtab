@@ -149,7 +149,7 @@ page is an inline SVG symbol generated at build time from the extension's own
 draw. `script-src` is a sha256 hash whitelist generated from the built HTML, so nothing
 runs on that page that wasn't built into it.
 
-Merging to `main` deploys it. [docs/DEPLOY.md](docs/DEPLOY.md) covers that pipeline,
+Merging to `master` deploys it. [docs/DEPLOY.md](docs/DEPLOY.md) covers that pipeline,
 Cloudflare Workers Static Assets, custom domains, and the one case where you'd want Pages
 instead.
 

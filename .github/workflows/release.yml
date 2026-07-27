@@ -69,7 +69,7 @@ jobs:
             dist/memtab-*.zip dist/SHA256SUMS \
             --title "$TAG" \
             --notes "$(cat <<'NOTES'
-          See [CHANGELOG.md](https://github.com/councilOfNine/memtab/blob/main/CHANGELOG.md).
+          See [CHANGELOG.md](https://github.com/councilOfNine/memtab/blob/master/CHANGELOG.md).
 
           `memtab-*.zip` is the exact package uploaded to the extension stores. The build is
           deterministic, so you can rebuild this tag and get identical bytes:

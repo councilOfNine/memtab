@@ -8,7 +8,7 @@ body:
         Thanks for filing! Two things that save everyone time:
 
         **If the indicator doesn't appear on a site**, check
-        [docs/TROUBLESHOOTING.md](https://github.com/councilOfNine/memtab/blob/main/docs/TROUBLESHOOTING.md)
+        [docs/TROUBLESHOOTING.md](https://github.com/councilOfNine/memtab/blob/master/docs/TROUBLESHOOTING.md)
         first — there are pages where Chrome forbids extensions from running at all, and
         sites whose security policy blocks generated favicons entirely. The popup names
         the specific reason for most of these.
@@ -17,7 +17,7 @@ body:
         renderer process, not the tab's real memory. It is normally much smaller than
         Chrome's Task Manager shows, and tabs on the same site share one reading. That's
         a browser limitation, not a bug —
-        [the details are here](https://github.com/councilOfNine/memtab/blob/main/docs/ARCHITECTURE.md).
+        [the details are here](https://github.com/councilOfNine/memtab/blob/master/docs/ARCHITECTURE.md).
 
   - type: input
     id: site
