@@ -5,7 +5,7 @@
 Please **do not** open a public issue for a security problem.
 
 Use GitHub's private reporting:
-[Report a vulnerability](https://github.com/itsmiketorres/memtab/security/advisories/new).
+[Report a vulnerability](https://github.com/councilOfNine/memtab/security/advisories/new).
 
 We'll acknowledge within a few days and keep you updated on a fix.
 

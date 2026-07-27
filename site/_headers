@@ -13,11 +13,15 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
-  # The site ships no JavaScript at all and loads nothing from another origin, so this
-  # can be about as tight as a CSP gets. script-src 'none' is the load-bearing line:
-  # if a script ever sneaks in, the page breaks loudly here rather than quietly
-  # shipping something the privacy claims don't cover.
-  Content-Security-Policy: default-src 'none'; script-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  # The site loads nothing from another origin, so this is about as tight as a CSP gets.
+  #
+  # script-src is the load-bearing line. @script-hashes@ is replaced at build time by
+  # scripts/build-site.mjs with a sha256 hash of each inline script it finds in the
+  # built HTML — or with 'none' when there are none. That makes script-src a whitelist
+  # of exact byte sequences: no 'unsafe-inline', no 'self', and no way to load a script
+  # from anywhere. Editing a script without rebuilding means the browser refuses to run
+  # it, which is the failure mode we want.
+  Content-Security-Policy: default-src 'none'; script-src @script-hashes@; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 
 # HTML is what changes; let it revalidate rather than go stale in a browser cache.
 /

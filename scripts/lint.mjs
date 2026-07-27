@@ -240,10 +240,15 @@ function siteCsp() {
   const siteDir = join(ROOT, 'site');
   if (!existsSync(siteDir)) return;
 
-  // site/_headers ships `style-src 'self'; script-src 'self'` with no 'unsafe-inline',
-  // so an inline <style>, a style="..." attribute or an inline <script> is silently
-  // dropped by the browser — the page looks broken only once deployed. Setting styles
-  // through CSSOM (element.style.setProperty) is fine and is what demo.js does.
+  // site/_headers ships `style-src 'self'` with no 'unsafe-inline', so an inline <style>
+  // or a style="..." attribute is silently dropped by the browser — the page looks broken
+  // only once deployed.
+  //
+  // Scripts are a whitelist of exact sha256 hashes that build-site.mjs generates from the
+  // built HTML. That only works for scripts with no attributes: a `src` would need a host
+  // source (which is never allowed here), and attributes like `defer` or `nonce` change
+  // nothing about the hash but signal a script this rule wasn't written for.
+  let inlineScripts = 0;
   for (const file of walk(siteDir).filter((f) => f.endsWith('.html'))) {
     const source = readFileSync(file, 'utf8');
     const name = relative(ROOT, file);
@@ -254,17 +259,34 @@ function siteCsp() {
     if (/<style[\s>]/.test(source)) {
       fail(check, `${name} has an inline <style> block, which the site's CSP blocks`);
     }
-    // Not just inline scripts: the site ships `script-src 'none'` and is meant to have
-    // no JavaScript at all, so any <script> is a defect rather than a CSP question.
-    if (/<script[\s>]/.test(source)) {
-      fail(check, `${name} has a <script>; the site ships script-src 'none' and no JavaScript`);
+
+    for (const match of source.matchAll(/<script([^>]*)>/g)) {
+      if (match[1].trim() !== '') {
+        fail(
+          check,
+          `${name} has <script${match[1]}>; only a bare inline <script> can be pinned ` +
+            `by a CSP hash, and the site allows no script sources`
+        );
+      } else {
+        inlineScripts++;
+      }
     }
   }
 
   if (walk(siteDir).some((f) => f.endsWith('.js'))) {
-    fail(check, 'site/ contains a .js file; this site is meant to ship no JavaScript');
+    fail(check, 'site/ contains a .js file; every script here must be inline and hashed');
   }
 
+  // The hash whitelist is only as good as the injection point that carries it. If the
+  // marker is gone the built CSP would contain a literal placeholder and every script
+  // would be blocked in production while passing every check here.
+  const headers = read('site', '_headers');
+  if (!headers.includes('@script-hashes@')) {
+    fail(check, 'site/_headers is missing the @script-hashes@ injection point');
+  }
+  if (/script-src\s+'unsafe-inline'|script-src[^;]*\shttps?:/.test(headers)) {
+    fail(check, "site/_headers relaxes script-src beyond hashes; keep it a hash whitelist");
+  }
   // The generated pickers depend on these markers surviving edits to the sources.
   const markers = [
     ['site/index.html', ['<!--@symbols-->', '<!--@style-radios-->', '<!--@palette-radios-->', '<!--@strips-light-->', '<!--@strips-dark-->']],
@@ -277,7 +299,11 @@ function siteCsp() {
     }
   }
 
-  pass(check, 'no scripts, no inline styles, injection points intact');
+  pass(
+    check,
+    `${inlineScripts} inline script${inlineScripts === 1 ? '' : 's'} to be hashed, ` +
+      'no external JS, no inline styles, injection points intact'
+  );
 }
 
 // ── guarded access to channel-gated APIs ────────────────────────────────────
@@ -299,18 +325,22 @@ function guardedOptionalApis() {
 
 // ── documentation links ─────────────────────────────────────────────────────
 
+/** Canonical `owner/repo`, taken from package.json so nothing else hardcodes it. */
+function repoSlug() {
+  const url = json('package.json').repository?.url || '';
+  const match = url.match(/github\.com[/:]([^/]+)\/([^/.]+)/);
+  if (!match) throw new Error('package.json repository.url is not a github.com URL');
+  return { owner: match[1], repo: match[2] };
+}
+
 function markdownLinks() {
   const check = 'doc links';
-  const files = walk(ROOT).filter(
-    (f) => (f.endsWith('.md') || f.endsWith('.yml')) && !f.includes('/node_modules/')
-  );
+  const { owner, repo } = repoSlug();
 
   let count = 0;
-  for (const file of files) {
-    const source = readFileSync(file, 'utf8');
-
+  for (const file of walk(ROOT).filter((f) => f.endsWith('.md') || f.endsWith('.yml'))) {
     // Relative markdown links.
-    for (const match of source.matchAll(/\]\(([^)\s#][^)\s]*)\)/g)) {
+    for (const match of readFileSync(file, 'utf8').matchAll(/\]\(([^)\s#][^)\s]*)\)/g)) {
       const href = match[1];
       if (/^(https?:|mailto:|#)/.test(href)) continue;
       const target = resolve(dirname(file), href.split('#')[0]);
@@ -319,20 +349,45 @@ function markdownLinks() {
         fail(check, `${relative(ROOT, file)} links to ${href}, which does not exist`);
       }
     }
+  }
 
-    // github.com/.../blob/main/<path> links into our own repo.
-    for (const match of source.matchAll(
-      /https:\/\/github\.com\/itsmiketorres\/memtab\/blob\/main\/([^)\s"']+)/g
-    )) {
-      const target = join(ROOT, match[1].split('#')[0]);
+  // Links into our own repo, wherever they appear — docs, workflow YAML, the marketing
+  // site, the options page. Transferring a repo rewrites none of these, and GitHub's
+  // redirect from the old owner hides the breakage until someone reclaims that name.
+  // So the slug comes from package.json and any other owner is drift from a rename.
+  let repoLinks = 0;
+  const anyOwner = new RegExp(`https://github\\.com/([\\w.-]+)/${repo}(?=[/\\s"')]|$)`, 'g');
+  const ourBlobs = new RegExp(`https://github\\.com/${owner}/${repo}/blob/main/([^)\\s"']+)`, 'g');
+
+  for (const file of walk(ROOT).filter((f) => /\.(md|yml|html)$/.test(f))) {
+    const source = readFileSync(file, 'utf8');
+
+    for (const match of source.matchAll(anyOwner)) {
+      repoLinks++;
+      if (match[1] !== owner) {
+        fail(
+          check,
+          `${relative(ROOT, file)} links to github.com/${match[1]}/${repo}, ` +
+            `but package.json says this repo is ${owner}/${repo}`
+        );
+      }
+    }
+
+    // A blob link has to resolve to a file that actually exists at that path.
+    for (const match of source.matchAll(ourBlobs)) {
       count++;
+      const target = join(ROOT, match[1].split('#')[0]);
       if (!existsSync(target)) {
         fail(check, `${relative(ROOT, file)} links to repo path ${match[1]}, which does not exist`);
       }
     }
   }
 
-  pass(check, `${count} links resolved`);
+  if (repoLinks === 0) {
+    fail(check, `no links to github.com/${owner}/${repo} found — is the slug in package.json right?`);
+  }
+
+  pass(check, `${count} links resolved, ${repoLinks} on ${owner}/${repo}`);
 }
 
 // ── style ───────────────────────────────────────────────────────────────────

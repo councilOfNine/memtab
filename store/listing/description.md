@@ -59,4 +59,4 @@ OPEN SOURCE
 
 MIT licensed, no dependencies, no obfuscation. Issues and pull requests welcome.
 
-Source and documentation: https://github.com/itsmiketorres/memtab
+Source and documentation: https://github.com/councilOfNine/memtab

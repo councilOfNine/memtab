@@ -4,9 +4,10 @@
  * Self-contained by design: no fonts, scripts or images from any other origin, which
  * is what lets site/_headers ship a `default-src 'none'` Content-Security-Policy.
  *
- * There is no JavaScript on this page at all. The style and palette pickers are real
- * radio inputs, and `:has()` on the container turns a checked radio into a variable
- * change — see "the picker" near the bottom.
+ * Everything visual here is CSS. The style and palette pickers are real radio inputs,
+ * and `:has()` on the container turns a checked radio into a variable change — see
+ * "the picker" near the bottom. The one exception is the copy button, which needs
+ * `navigator.clipboard` and so needs the site's single inline script.
  */
 
 :root {
@@ -290,6 +291,7 @@ h1 {
 .btn {
   display: inline-flex;
   align-items: center;
+  gap: 9px;
   padding: 10px 19px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -692,6 +694,67 @@ h1 {
   padding: 0;
 }
 
+/*
+ * The copy button is revealed by the inline script, so `hidden` is the default state in
+ * the markup and a visitor without JavaScript keeps the selectable <pre> rather than
+ * getting a button that does nothing. `[hidden]` needs the explicit `display: none`
+ * because the flex context below would otherwise override the UA rule.
+ */
+.copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.copy pre {
+  flex: 1;
+  min-width: 0;
+}
+
+.copy__btn[hidden] {
+  display: none;
+}
+
+.copy__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  margin-top: 10px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.copy__btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.icon {
+  width: 1.05em;
+  height: 1.05em;
+  flex: none;
+}
+
+@media (max-width: 560px) {
+  .copy {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .copy__btn {
+    justify-content: center;
+    margin-top: 0;
+  }
+}
+
 .cta-row {
   margin-top: 26px;
 }
@@ -858,3 +921,42 @@ h1 {
 .prose tbody tr:last-child td {
   border-bottom: 0;
 }
+
+/* ── toast ────────────────────────────────────────────────────── */
+
+/*
+ * Announced to assistive tech through role="status" on the element itself, so the
+ * transition is decoration rather than the only signal. It stays out of the layout via
+ * `visibility` instead of `display` so the fade can actually run, and
+ * `pointer-events: none` keeps it from swallowing clicks while it sits there invisible.
+ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 10;
+  transform: translate(-50%, 12px);
+  padding: 11px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 14.5px;
+  font-weight: 550;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+}
+
+.toast.is-on {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* No prefers-reduced-motion block here on purpose: the global `*` rule near the top of
+   this file already clamps every transition-duration with !important, which this could
+   not override anyway. */

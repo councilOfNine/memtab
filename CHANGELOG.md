@@ -9,8 +9,40 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ## [Unreleased]
 
+### Changed
+
+- **The repository moved to the `councilOfNine` organisation.** Every hardcoded
+  `itsmiketorres/memtab` URL followed it — docs, workflows, store listing, the options
+  page and all three site pages. GitHub redirects the old path, which is exactly why
+  this is easy to miss: it works until someone reclaims that username.
+- The doc-link lint rule no longer hardcodes the owner. It reads the slug from
+  `package.json` and fails on any `github.com/<other-owner>/memtab` link, so the next
+  transfer can't leave stale URLs behind. It also covers `.html` now, which is where
+  most of them were.
+
 ### Added
 
+- **Copy button** on the install section's `git clone` command, with a toast
+  confirmation. This is the site's first and only script — the clipboard has no CSS
+  equivalent. It ships `hidden` and is revealed by the script, so a visitor without
+  JavaScript keeps the selectable `<pre>` rather than a dead button.
+- **`script-src` is now a sha256 hash whitelist** rather than `'none'`.
+  `scripts/build-site.mjs` hashes every inline script in the *built* HTML (after
+  minification, since that changes the bytes) and substitutes it into `_headers`. No
+  `'unsafe-inline'`, no host sources: nothing runs on that page that wasn't built into
+  it. Lint rejects any `<script>` with attributes and any `.js` file under `site/`.
+- **`npm run verify:deploy`** (`scripts/verify-deploy.mjs`) — re-hashes the live page's
+  inline scripts against the live page's CSP. The HTML and the header come from
+  different build steps and can drift; nothing else notices, because the symptom is a
+  script silently refused in the browser. Cloudflare's injected challenge-platform
+  script is excluded from that check and reported as a warning instead.
+  `--expect-built dist/site/index.html --wait 300` additionally proves the deploy landed.
+- **Post-deploy verification** (`.github/workflows/verify-site.yml`) — Cloudflare's Git
+  integration owns the deploy; this builds the same commit and polls the live site until
+  its CSP carries that build's script hash. A failed Workers Build leaves the previous
+  version serving perfectly well, so without this the only symptom of a broken deploy is
+  that merging silently changed nothing.
+- A GitHub mark on the "Open the repository" button.
 - **Browser smoke test** (`npm run test:e2e`) — loads the real extension into a real
   Chrome over the DevTools Protocol and asserts it composites a 32×32 favicon, wins
   against a page that rewrites its own, falls back to the badge under a strict CSP,
@@ -129,5 +161,5 @@ Carried over from the prototypes:
   falls back to a corner badge.
 - Background tabs update slowly because Chrome throttles hidden-tab timers.
 
-[Unreleased]: https://github.com/itsmiketorres/memtab/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/itsmiketorres/memtab/releases/tag/v0.1.0
+[Unreleased]: https://github.com/councilOfNine/memtab/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/councilOfNine/memtab/releases/tag/v0.1.0

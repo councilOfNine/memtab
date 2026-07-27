@@ -53,7 +53,7 @@ indicator. The extension does not read page content, form fields, cookies, local
 or browsing history, and it makes no network requests of any kind — there is no fetch to
 any third-party origin anywhere in the source. There is no build step, so the published
 package is byte-identical to the reviewable source at
-https://github.com/itsmiketorres/memtab.
+https://github.com/councilOfNine/memtab.
 
 ## Remote code
 
