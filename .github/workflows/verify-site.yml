@@ -1,6 +1,6 @@
 name: Verify site
 
-# Cloudflare's Git integration owns the deploy: merging to main triggers a Workers Build
+# Cloudflare's Git integration owns the deploy: merging to master triggers a Workers Build
 # which runs `npm run build:site` and `wrangler deploy`. This workflow does not deploy —
 # two deploy paths would race — it checks that the deploy actually happened and that what
 # went live is what this commit builds.
@@ -11,7 +11,7 @@ name: Verify site
 # turns that into a red X.
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'site/**'
       - 'src/icons/**'

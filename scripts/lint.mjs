@@ -333,6 +333,13 @@ function repoSlug() {
   return { owner: match[1], repo: match[2] };
 }
 
+/**
+ * The trunk, named once. Every `blob/<branch>/` link and both workflow triggers have to
+ * agree with it: the repo has already been through one rename where they didn't, and a
+ * `blob/` link on a branch that no longer exists 404s with nothing to catch it.
+ */
+const DEFAULT_BRANCH = 'master';
+
 function markdownLinks() {
   const check = 'doc links';
   const { owner, repo } = repoSlug();
@@ -357,7 +364,12 @@ function markdownLinks() {
   // So the slug comes from package.json and any other owner is drift from a rename.
   let repoLinks = 0;
   const anyOwner = new RegExp(`https://github\\.com/([\\w.-]+)/${repo}(?=[/\\s"')]|$)`, 'g');
-  const ourBlobs = new RegExp(`https://github\\.com/${owner}/${repo}/blob/main/([^)\\s"']+)`, 'g');
+  // Captures the branch as well as the path, so a link on the wrong branch is a failure
+  // rather than something the pattern quietly declines to match.
+  const ourBlobs = new RegExp(
+    `https://github\\.com/${owner}/${repo}/blob/([\\w.-]+)/([^)\\s"']+)`,
+    'g'
+  );
 
   for (const file of walk(ROOT).filter((f) => /\.(md|yml|html)$/.test(f))) {
     const source = readFileSync(file, 'utf8');
@@ -373,12 +385,18 @@ function markdownLinks() {
       }
     }
 
-    // A blob link has to resolve to a file that actually exists at that path.
-    for (const match of source.matchAll(ourBlobs)) {
+    // A blob link has to name the trunk and resolve to a file that exists at that path.
+    for (const [, branch, path] of source.matchAll(ourBlobs)) {
       count++;
-      const target = join(ROOT, match[1].split('#')[0]);
-      if (!existsSync(target)) {
-        fail(check, `${relative(ROOT, file)} links to repo path ${match[1]}, which does not exist`);
+      if (branch !== DEFAULT_BRANCH) {
+        fail(
+          check,
+          `${relative(ROOT, file)} links to blob/${branch}/${path}, ` +
+            `but the trunk is ${DEFAULT_BRANCH}`
+        );
+      }
+      if (!existsSync(join(ROOT, path.split('#')[0]))) {
+        fail(check, `${relative(ROOT, file)} links to repo path ${path}, which does not exist`);
       }
     }
   }
@@ -387,7 +405,16 @@ function markdownLinks() {
     fail(check, `no links to github.com/${owner}/${repo} found — is the slug in package.json right?`);
   }
 
-  pass(check, `${count} links resolved, ${repoLinks} on ${owner}/${repo}`);
+  // The workflows have to fire on the branch everything else calls the trunk.
+  for (const name of ['ci.yml', 'verify-site.yml']) {
+    const workflow = read('.github', 'workflows', name);
+    const trigger = workflow.match(/branches:\s*\[([^\]]+)\]/);
+    if (trigger && trigger[1].trim() !== DEFAULT_BRANCH) {
+      fail(check, `.github/workflows/${name} triggers on ${trigger[1].trim()}, not ${DEFAULT_BRANCH}`);
+    }
+  }
+
+  pass(check, `${count} links resolved, ${repoLinks} on ${owner}/${repo}@${DEFAULT_BRANCH}`);
 }
 
 // ── style ───────────────────────────────────────────────────────────────────

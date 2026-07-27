@@ -11,7 +11,7 @@ npm run deploy:site    # build, then npx wrangler deploy
 npm run verify:deploy  # check what the live site actually serves
 ```
 
-Merging to `main` deploys automatically — see [Automatic deploys](#automatic-deploys).
+Merging to `master` deploys automatically — see [Automatic deploys](#automatic-deploys).
 
 ## How a static page stays interactive
 
@@ -100,7 +100,7 @@ npx wrangler@latest dev
 
 ## Automatic deploys
 
-Merging to `main` deploys the site. **Cloudflare's Git integration owns the deploy** —
+Merging to `master` deploys the site. **Cloudflare's Git integration owns the deploy** —
 Workers Builds watches the repo, runs the build command, and runs `wrangler deploy`. It
 reports back to GitHub as a `Workers Builds: memtab-site` check on each PR.
 
