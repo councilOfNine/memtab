@@ -70,10 +70,20 @@ jobs:
       - name: Build
         run: npm run build:site
 
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # Deliberately not cloudflare/wrangler-action. That action installs a wrangler
+      # version of its own (3.90.0 as of v3), and Workers Static Assets needs 3.91+ —
+      # below that, `wrangler deploy` rejects a config with no `main`, which is exactly
+      # what an assets-only Worker is. It failed with "Missing entry-point" on a config
+      # that deploys fine locally.
+      #
+      # Running the command directly means CI and `npm run deploy:site` are the same
+      # command against the same wrangler, so a deploy that works on a laptop works here.
+      # It also keeps a third-party action out of the path that holds the deploy token.
+      - name: Deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler@latest deploy
 
       # Checks the live response rather than the build output: that the deploy landed,
       # and that every inline script the page serves is named by the CSP it serves. Those
