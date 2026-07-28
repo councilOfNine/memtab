@@ -100,44 +100,66 @@ npx wrangler@latest dev
 
 ## Automatic deploys
 
-Merging to `master` deploys the site. **Cloudflare's Git integration owns the deploy** —
-Workers Builds watches the repo, runs the build command, and runs `wrangler deploy`. It
-reports back to GitHub as a `Workers Builds: memtab-site` check on each PR.
+Pushing to `master` deploys the site.
+[`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml) runs
+`npm run lint && npm test`, builds, deploys with `wrangler-action`, then verifies the
+live response.
 
-Connect it at Dashboard → Workers & Pages → `memtab-site` → Settings → **Builds**:
+It only fires when something that changes what gets served changed — `site/`, the icons,
+the shared renderer, the build script, `wrangler.jsonc` — so a docs-only or extension-only
+push doesn't redeploy an identical page. `workflow_dispatch` redeploys without an empty
+commit. Concurrency is one at a time and queued rather than cancelled.
 
-| Setting | Value |
+### One-time setup
+
+Two repository secrets, under Settings → Secrets and variables → Actions:
+
+| Secret | Where it comes from |
 | --- | --- |
-| Build command | `npm run build:site` |
-| Deploy command | `npx wrangler deploy` (the default) |
-| Root directory | leave empty |
+| `CLOUDFLARE_API_TOKEN` | My Profile → API Tokens → Create Token → **Edit Cloudflare Workers** |
+| `CLOUDFLARE_ACCOUNT_ID` | Workers & Pages → right sidebar, or `npx wrangler whoami` |
 
-**The build command is the one that gets missed.** Leave it empty and Cloudflare skips
-straight to `wrangler deploy`, `dist/site/` was never generated, and the build fails with
-the assets directory not existing. There is no "build output directory" field on
-Workers — that's `assets.directory` in `wrangler.jsonc`, already `./dist/site`.
+Scope the token to this account and the `fixit.works` zone. A global API key works but
+grants far more than a deploy needs. Missing either secret fails the run with an explicit
+message rather than skipping silently — a deploy pipeline that quietly does nothing when
+misconfigured is worse than one that fails, because `master` and the live site drift with
+nothing to show for it.
 
-### Why CI does not also deploy
+The `production` environment is created by GitHub on first run. Adding required reviewers
+to it turns every deploy into an approval gate.
 
-Only one thing should deploy. Two deploy paths race and double every merge, so
-[`.github/workflows/verify-site.yml`](../.github/workflows/verify-site.yml) deliberately
-does **not** deploy. It builds the site locally, then polls the live URL until the CSP
-contains the script hash that this commit produces:
+### Why not Cloudflare's own Git integration
+
+Dashboard → Workers & Pages → `memtab-site` → Settings → **Builds** also works, with
+build command `npm run build:site`, and needs no secrets in GitHub.
+
+It isn't what this repo uses because it deploys whatever lands on the branch and has no
+notion of the test suite — and this site is generated from the extension's real
+`render.plan()`, so a commit that breaks the renderer produces a broken page and ships it.
+The Actions workflow gates on lint and tests first.
+
+**Pick one, not both.** With the Git integration connected *and* this workflow enabled,
+every push deploys twice and the two race. If you ever reconnect it, delete the workflow.
+
+Worth knowing if you do reconnect it: Workers Builds needs the Cloudflare GitHub App
+authorized for the **organisation** that owns the repo. After this repo moved to
+`councilOfNine` its builds failed at duration `0` — instantly, before installing
+anything, which is the signature of the app having lost repo access rather than a build
+error.
+
+### Verifying a deploy landed
 
 ```bash
-node scripts/verify-deploy.mjs https://memtab.fixit.works/ \
-  --expect-built dist/site/index.html --wait 300
+npm run verify:deploy
 ```
 
-That check exists because of how this fails in practice. A Workers Build that fails
-leaves the *previous* version serving perfectly well — every header is right, every
-internal check passes, and the only symptom is that merging changed nothing. Comparing
-the live CSP against the locally built hash is what turns a silent no-op into a red X.
+`scripts/verify-deploy.mjs` re-hashes the live page's inline scripts against the live
+page's CSP. Adding `--expect-built dist/site/index.html --wait 120` — which the workflow
+does — additionally proves *this* build is what's serving, not the previous one.
 
-The trade-off worth knowing: Workers Builds deploys whatever lands on the branch and has
-no notion of the test suite, so a commit that breaks the renderer ships and *then* fails
-verification. Branch protection requiring the `check` jobs to pass before merge is what
-closes that gap, rather than moving the deploy into Actions.
+That matters because of how a failed deploy actually presents: the previous version keeps
+serving perfectly well, every header is right, every internal check passes, and the only
+symptom is that pushing changed nothing at all.
 
 ## Custom domain
 
