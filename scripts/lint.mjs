@@ -405,12 +405,17 @@ function markdownLinks() {
     fail(check, `no links to github.com/${owner}/${repo} found — is the slug in package.json right?`);
   }
 
-  // The workflows have to fire on the branch everything else calls the trunk.
-  for (const name of ['ci.yml', 'verify-site.yml']) {
-    const workflow = read('.github', 'workflows', name);
-    const trigger = workflow.match(/branches:\s*\[([^\]]+)\]/);
+  // Any workflow with a branch trigger has to fire on the branch everything else calls
+  // the trunk. Walked rather than listed by name: a hardcoded list silently stops
+  // checking a workflow that gets renamed, which is the same failure this rule exists to
+  // catch. Tag-triggered workflows (release.yml) have no `branches:` and are skipped.
+  for (const file of walk(join(ROOT, '.github', 'workflows'))) {
+    const trigger = readFileSync(file, 'utf8').match(/branches:\s*\[([^\]]+)\]/);
     if (trigger && trigger[1].trim() !== DEFAULT_BRANCH) {
-      fail(check, `.github/workflows/${name} triggers on ${trigger[1].trim()}, not ${DEFAULT_BRANCH}`);
+      fail(
+        check,
+        `${relative(ROOT, file)} triggers on ${trigger[1].trim()}, not ${DEFAULT_BRANCH}`
+      );
     }
   }
 
