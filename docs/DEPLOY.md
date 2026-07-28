@@ -102,8 +102,15 @@ npx wrangler@latest dev
 
 Pushing to `master` deploys the site.
 [`.github/workflows/deploy-site.yml`](../.github/workflows/deploy-site.yml) runs
-`npm run lint && npm test`, builds, deploys with `wrangler-action`, then verifies the
+`npm run lint && npm test`, builds, runs `npx wrangler@latest deploy`, then verifies the
 live response.
+
+It runs wrangler directly rather than using `cloudflare/wrangler-action`. That action
+installs its own wrangler (3.90.0 as of v3), and Workers Static Assets needs **3.91+** —
+below that, `wrangler deploy` rejects a config with no `main`, which is precisely what an
+assets-only Worker is. It fails with `Missing entry-point` on a config that deploys fine
+locally. Calling wrangler directly also means CI and `npm run deploy:site` are the same
+command, and keeps a third-party action out of the path that holds the deploy token.
 
 It only fires when something that changes what gets served changed — `site/`, the icons,
 the shared renderer, the build script, `wrangler.jsonc` — so a docs-only or extension-only
