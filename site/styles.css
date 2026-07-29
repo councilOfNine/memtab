@@ -641,6 +641,18 @@ h1 {
   display: grid;
   gap: 14px;
   max-width: 68ch;
+
+  /*
+   * minmax(0, 1fr) rather than the default `auto` column.
+   *
+   * An `auto` grid column resolves to minmax(min-content, max-content), so an item wide
+   * enough refuses to shrink and overflows the grid instead. The `git clone` URL is one
+   * unbreakable token, which made every step card 528px wide in a 375px viewport — the
+   * whole page scrolled sideways and steps 2 and 3 were clipped mid-sentence. The 0
+   * lower bound lets the column shrink so `.steps pre { overflow-x: auto }` can do its
+   * job and scroll the command inside the card.
+   */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .steps li {
