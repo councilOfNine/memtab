@@ -10,7 +10,7 @@
 (function () {
   'use strict';
 
-  const { constants, settings: Settings, format, levels } = globalThis.MemTab;
+  const { constants, settings: Settings, format, levels, measure } = globalThis.MemTab;
 
   const $ = (id) => document.getElementById(id);
 
@@ -85,7 +85,11 @@
       ? `${LEVEL_LABEL[level]} · ${format.since(Date.now() - reading.at)}`
       : LEVEL_LABEL[level];
 
-    $('used').textContent = format.bytes(reading.used);
+    // measure.metric(), not reading.used: the headline must be the same figure the
+    // tab colour is keyed to — the allocated heap. Showing one number and colouring
+    // by another is exactly the drift this popup once had.
+    const value = measure.metric(reading);
+    $('used').textContent = format.bytes(value);
     // "JS heap" sits in the label, not a footnote: the headline number is several
     // times smaller than the figure Chrome shows in the tab hover card, and a bare
     // "93 MB" invites reading it as the tab's total memory, which it is not.
@@ -96,9 +100,9 @@
     // The meter runs from zero to whichever is larger: the heap limit, or a little
     // past the high threshold — so the thresholds are always visible on it.
     const bounds = levels.boundaries(settings, reading);
-    const scaleMax = Math.max(reading.limit || 0, bounds.high * 1.25, reading.used * 1.1);
+    const scaleMax = Math.max(reading.limit || 0, bounds.high * 1.25, value * 1.1);
 
-    $('meter-fill').style.width = `${Math.min(100, (reading.used / scaleMax) * 100)}%`;
+    $('meter-fill').style.width = `${Math.min(100, (value / scaleMax) * 100)}%`;
     $('mark-warn').style.left = `${Math.min(100, (bounds.warn / scaleMax) * 100)}%`;
     $('mark-high').style.left = `${Math.min(100, (bounds.high / scaleMax) * 100)}%`;
     $('scale-max').textContent = format.bytes(scaleMax);

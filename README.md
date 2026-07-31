@@ -69,7 +69,9 @@ Settings sync across your Chrome profiles, and can be exported and imported as J
 
 MemTab reads `performance.memory`, the only per-page memory API available to a Chrome
 extension on the stable channel. It reports the **V8 JavaScript heap of the renderer
-process** serving a site. Three things follow:
+process** serving a site — specifically the *allocated* heap (`totalJSHeapSize`), which
+is steadier than the live-object count (`usedJSHeapSize` falls at every garbage
+collection) and closer to what the tab actually costs. Three things follow:
 
 - **It is not the tab's total memory.** It excludes the DOM, images, decoded bitmaps,
   canvas and the compositor — usually most of what a tab really costs. Real tab memory is

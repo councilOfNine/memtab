@@ -100,7 +100,18 @@ This is the most important section in this document, and the thing most likely t
 generate bug reports.
 
 MemTab reads **`performance.memory`**, a non-standard Chrome API. It reports the V8
-JavaScript heap for the *renderer process* serving the page. Consequences:
+JavaScript heap for the *renderer process* serving the page.
+
+Of the three fields it exposes, MemTab levels and displays **`totalJSHeapSize`** — the
+heap V8 has actually allocated — not `usedJSHeapSize`, which counts live objects.
+`used` sawtooths with garbage collection (it climbs while garbage accumulates and drops
+at every major GC), so a colour keyed to it flickers on GC cycles rather than tracking
+real growth; `total` is the envelope of that sawtooth and the closer of the two to what
+the tab costs the machine. This is what the original prototype shipped, and the one
+place allowed to make that choice is `measure.metric()` — `levels.classify()` and the
+popup both go through it, so the tab colour and the headline number cannot disagree.
+
+Consequences:
 
 **It is not the tab's memory.** It covers JS objects and V8 external memory
 (`ArrayBuffer` backing stores, WebAssembly), and excludes the DOM, images, decoded

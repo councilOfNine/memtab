@@ -9,6 +9,7 @@
 
   const MemTab = (root.MemTab = root.MemTab || {});
   const format = MemTab.format || require('./format.js');
+  const measure = MemTab.measure || require('./measure.js');
 
   /**
    * The thresholds a reading is compared against, in bytes, for the active mode.
@@ -63,11 +64,19 @@
     return bytes < boundary * (1 - hysteresis) ? raw : previous;
   }
 
-  /** Convenience wrapper: settings + reading + previous level -> level. */
+  /**
+   * Convenience wrapper: settings + reading + previous level -> level.
+   *
+   * Levels on measure.metric() — the allocated heap — so the tab colour and the
+   * popup's headline number are the same figure by construction. The original
+   * prototype levelled on totalJSHeapSize; the rewrite drifted to used, which
+   * made the colour flicker with GC and disagree with what users expected.
+   */
   function classify(settings, reading, previous) {
-    if (!reading || !Number.isFinite(reading.used)) return null;
+    const value = measure.metric(reading);
+    if (!Number.isFinite(value)) return null;
     const bounds = boundaries(settings, reading);
-    return levelWithHysteresis(reading.used, bounds, previous, settings.hysteresis);
+    return levelWithHysteresis(value, bounds, previous, settings.hysteresis);
   }
 
   const api = { boundaries, levelFor, levelWithHysteresis, classify };

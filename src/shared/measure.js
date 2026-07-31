@@ -32,14 +32,40 @@
     if (!supported(perf)) return null;
     const m = perf.memory;
     const used = m.usedJSHeapSize;
+    const total = m.totalJSHeapSize;
     const limit = m.jsHeapSizeLimit;
+    const basis = Number.isFinite(total) ? total : used;
     return {
       used,
-      total: m.totalJSHeapSize,
+      total,
       limit,
-      ratio: Number.isFinite(limit) && limit > 0 ? used / limit : NaN,
+      ratio: Number.isFinite(limit) && limit > 0 ? basis / limit : NaN,
       at: Number.isFinite(now) ? now : Date.now(),
     };
+  }
+
+  /**
+   * The one figure MemTab levels on and displays: the ALLOCATED heap
+   * (`totalJSHeapSize`), not live objects (`usedJSHeapSize`).
+   *
+   * That choice is deliberate, matches the original prototype, and once drifted:
+   * the rewrite quietly switched to `used`, so the popup and the tab colour tracked
+   * a number that falls at every major GC. Two reasons `total` is the right one:
+   *
+   * - `used` sawtooths with garbage collection — it climbs while garbage
+   *   accumulates and drops at every major GC, so a colour keyed to it flickers on
+   *   GC cycles rather than tracking real growth. `total` is the envelope of that
+   *   sawtooth; it moves when the heap actually grows or shrinks.
+   * - `total` is what V8 has actually claimed from the OS for the heap, which is
+   *   the closer of the two to what the tab costs the machine.
+   *
+   * Everything that turns a reading into a level or a headline number must go
+   * through here — levels.classify() and the popup both do. Falls back to `used`
+   * for a reading that lacks `total` (older stored data, hand-built fixtures).
+   */
+  function metric(reading) {
+    if (!reading) return NaN;
+    return Number.isFinite(reading.total) ? reading.total : reading.used;
   }
 
   /**
@@ -74,7 +100,7 @@
     return (now || Date.now()) - reading.at > Math.max(intervalMs * 3, 60000);
   }
 
-  const api = { supported, read, looksBucketized, isStale, BUCKET_FLOOR };
+  const api = { supported, read, metric, looksBucketized, isStale, BUCKET_FLOOR };
 
   MemTab.measure = api;
 

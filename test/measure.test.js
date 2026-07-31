@@ -22,8 +22,19 @@ test('normalizes a reading into bytes plus a ratio', () => {
   assert.equal(result.used, 500);
   assert.equal(result.total, 800);
   assert.equal(result.limit, 2000);
-  assert.equal(result.ratio, 0.25);
+  // The ratio is allocated/limit (800/2000), not used/limit — the same basis as the
+  // level and the popup headline, so the percentage always describes the number
+  // shown next to it.
+  assert.equal(result.ratio, 0.4);
   assert.equal(result.at, 1234);
+});
+
+test('metric() is the allocated heap, falling back to used', () => {
+  // total, not used, is MemTab's number — what the original prototype levelled on.
+  assert.equal(measure.metric({ used: 500, total: 800 }), 800);
+  // Readings without a total (older stored data, hand-built fixtures) still work.
+  assert.equal(measure.metric({ used: 500 }), 500);
+  assert.ok(Number.isNaN(measure.metric(null)));
 });
 
 test('a zero or missing heap limit yields no ratio rather than Infinity', () => {

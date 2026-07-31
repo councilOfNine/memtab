@@ -109,3 +109,13 @@ test('classify wires settings, reading and previous level together', () => {
   assert.equal(levels.classify(settings, reading(195), 'high'), 'high');
   assert.equal(levels.classify(settings, reading(150), 'high'), 'warn');
 });
+
+test('classify levels on the allocated heap, not live objects', () => {
+  // The drift this pins: the original prototype coloured tabs by totalJSHeapSize;
+  // the rewrite quietly switched to usedJSHeapSize. A reading whose live objects sit
+  // below the warn threshold but whose allocated heap sits above it must classify by
+  // the allocated heap — the figure the popup shows and the user compares against.
+  const settings = Settings.sanitize({ thresholds: { warnMb: 100, highMb: 200 }, hysteresis: 0 });
+  const r = { used: fromMb(60), total: fromMb(150), limit: fromMb(4096) };
+  assert.equal(levels.classify(settings, r, null), 'warn');
+});
