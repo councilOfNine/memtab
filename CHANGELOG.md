@@ -115,6 +115,13 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Fixed
 
+- **The marketing site's own CSP blocked MemTab.** `img-src 'self'` on
+  memtab.fixit.works refused the extension's `data:` favicon — the site demoing a
+  favicon indicator forced the real thing into its corner-badge fallback, with a
+  violation report in the console. `img-src` now allows `data:`; data-URL images can
+  neither execute nor exfiltrate, and script-src stays a hash whitelist.
+  docs/TROUBLESHOOTING.md now quotes the exact console message and explains that one
+  report per page load on strict-CSP sites is the probe working, not a fault.
 - **`sanitize()` ignored `DEFAULTS` for every boolean setting.** Each one baked its
   default into a hand-rolled comparison — `raw.showOk === true`, `raw.enabled !==
   false` — so flipping a boolean default in `DEFAULTS` changed nothing: a fresh
