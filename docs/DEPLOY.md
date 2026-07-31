@@ -276,9 +276,35 @@ into every HTML response. On this site that means:
 - So the bot detection isn't working here either, while every visitor pays for the bytes
   and a CSP violation
 
-Turn both off under **Security → Bots** for the zone, then **purge the cache** — a
-redeploy alone does not evict it, and query-string cache-busting doesn't work because
-Workers Static Assets ignores query strings when matching. To confirm:
+### Turning it off — use the API, not the dashboard
+
+What actually worked here, after the dashboard toggle claimed to be off while fresh
+responses kept carrying the script (the bots page also moved to Security → Settings →
+Bot traffic mid-2026, and its SPA saves were not trustworthy — the page never even
+finishes loading for automation):
+
+```bash
+curl -sS -X PUT "https://api.cloudflare.com/client/v4/zones/<ZONE_ID>/bot_management" \
+  -H "Authorization: Bearer <TOKEN>" -H "Content-Type: application/json" \
+  -d '{"enable_js": false, "fight_mode": false}'
+```
+
+`enable_js` is the field under the "JavaScript Detections" toggle; `fight_mode` is Bot
+Fight Mode. The token needs **Zone → Bot Management → Edit** on the zone (mint a custom
+token for exactly that; the Global API Key also works but only via `X-Auth-Email` +
+`X-Auth-Key` — it does **not** work in a `Bearer` header, and mixing them is error
+10000). GET the same endpoint first to see the live state; the PUT echoes the change.
+
+Two cache non-facts learned the hard way:
+
+- **No purge is needed.** The script is added live at response time, so it disappears
+  from fresh responses as soon as the setting lands — and while it's on, purging can't
+  remove it either. A `cf-cache-status: MISS` response that still carries the script is
+  proof the setting, not the cache, is the problem.
+- A stored response's *headers* refresh via 304 revalidation even when its body doesn't
+  change, so `_headers` edits reach cached pages on their own schedule without a purge.
+
+To confirm:
 
 ```bash
 npm run verify:deploy

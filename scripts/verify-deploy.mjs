@@ -139,7 +139,9 @@ if (injected.length) {
   warnings.push(
     'Cloudflare injected a challenge-platform script (Bot Fight Mode / JS Detections). ' +
       'Our script-src blocks it, so it never runs — but it is still shipped to every ' +
-      'visitor. Turn it off under Security -> Bots for the zone, then purge the cache.'
+      'visitor. Fix: PUT /zones/<id>/bot_management with {"enable_js":false,' +
+      '"fight_mode":false} — the dashboard toggle has failed silently before, and no ' +
+      'cache purge is involved. See docs/DEPLOY.md.'
   );
 }
 
