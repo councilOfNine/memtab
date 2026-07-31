@@ -68,7 +68,13 @@ test(
     const title = await options.evaluate('document.title');
     assert.equal(title, 'MemTab settings');
 
-    const canvases = await options.evaluate('document.querySelectorAll("canvas").length');
+    // boot() awaits chrome.storage.sync before it builds the preview canvases, so on
+    // a slow runner they land after document readiness. A snapshot assert here was
+    // the suite's one flake: same commit, green on the PR, red on the master push.
+    const canvases = await waitFor(
+      () => options.evaluate('document.querySelectorAll("canvas").length || null'),
+      { timeout: 15000, what: 'the options previews to render' }
+    );
     assert.ok(canvases > 0, 'options page rendered no previews');
   });
 
