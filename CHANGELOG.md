@@ -9,6 +9,10 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.1] — 2026-07-31
+
 ### Changed
 
 - **The level and the popup now track the allocated JS heap (`totalJSHeapSize`), not
@@ -115,6 +119,12 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Fixed
 
+- **The install-time settings migration was a floating promise.** `onInstalled` ran
+  `storage.sync.get(...).then(set(...))` with no catch and the inner write dangling,
+  so any sync hiccup landed as "Uncaught (in promise)" in the chrome://extensions
+  error panel — on every install and reload, in exactly the place a store reviewer
+  looks. The chain now returns the write and catches, and a failed migration is
+  harmless by design: `sanitize()` runs on every load anyway.
 - **The marketing site's own CSP blocked MemTab.** `img-src 'self'` on
   memtab.fixit.works refused the extension's `data:` favicon — the site demoing a
   favicon indicator forced the real thing into its corner-badge fallback, with a
@@ -203,5 +213,6 @@ Carried over from the prototypes:
   falls back to a corner badge.
 - Background tabs update slowly because Chrome throttles hidden-tab timers.
 
-[Unreleased]: https://github.com/councilOfNine/memtab/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/councilOfNine/memtab/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/councilOfNine/memtab/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/councilOfNine/memtab/releases/tag/v0.1.0
