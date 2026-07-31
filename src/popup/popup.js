@@ -86,8 +86,11 @@
       : LEVEL_LABEL[level];
 
     $('used').textContent = format.bytes(reading.used);
+    // "JS heap" sits in the label, not a footnote: the headline number is several
+    // times smaller than the figure Chrome shows in the tab hover card, and a bare
+    // "93 MB" invites reading it as the tab's total memory, which it is not.
     $('ratio').textContent = Number.isFinite(reading.ratio)
-      ? `of ${format.bytes(reading.limit)} heap limit (${format.percent(reading.ratio)})`
+      ? `JS heap · of ${format.bytes(reading.limit)} limit (${format.percent(reading.ratio)})`
       : '';
 
     // The meter runs from zero to whichever is larger: the heap limit, or a little
@@ -182,7 +185,7 @@
     if (info.stale && info.hidden) {
       note('This tab has been in the background, where timers are slowed to about one per minute. The reading may be old.');
     }
-    note('This is the JavaScript heap for the renderer serving this site — shared with other tabs on the same site, and smaller than the tab’s real memory.');
+    note('This is the JavaScript heap for the renderer serving this site — shared with other tabs on the same site. The tab’s real memory is several times larger: Chrome shows it when you hover the tab, but doesn’t let extensions read that figure.');
 
     wireFooter(settings, origin);
   }

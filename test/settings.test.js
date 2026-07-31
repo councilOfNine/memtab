@@ -7,10 +7,15 @@ const Settings = require('../src/shared/settings.js');
 const constants = require('../src/shared/constants.js');
 const { createArea, createFailingArea } = require('./helpers/fake-storage.js');
 
-test('sanitize fills in every key from an empty object', () => {
+test('sanitize of an empty object IS the defaults, value for value', () => {
+  // Deep equality, not just key presence. The presence-only version of this test let
+  // `showOk: raw.showOk === true` ship: every key existed, but the booleans baked
+  // their defaults into the comparison operator, so flipping a default in DEFAULTS
+  // changed nothing on a fresh install. A default that sanitize() doesn't reproduce
+  // is not the default.
   const result = Settings.sanitize({});
-  for (const key of Object.keys(Settings.DEFAULTS)) {
-    assert.notEqual(result[key], undefined, `missing key: ${key}`);
+  for (const [key, value] of Object.entries(Settings.DEFAULTS)) {
+    assert.deepEqual(result[key], value, `sanitize({}).${key} does not match DEFAULTS.${key}`);
   }
 });
 

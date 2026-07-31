@@ -42,10 +42,13 @@
     style: 'ring',
 
     /**
-     * Don't decorate healthy tabs by default — an indicator on all 40 tabs is just
-     * noise. Turn this on to confirm MemTab is alive on a given page.
+     * Healthy tabs show green by default. The stoplight on every tab is the product —
+     * with this off, a browser full of healthy tabs looks exactly like MemTab not
+     * running at all, which reads as broken rather than quiet. Users who find forty
+     * green dots noisy can turn it off; that is a preference, not the first
+     * impression.
      */
-    showOk: false,
+    showOk: true,
 
     pollIntervalMs: 5000,
 
@@ -82,6 +85,16 @@
     return Number.isFinite(value) ? value : fallback;
   }
 
+  /**
+   * Booleans go through this like numbers go through num(): the default lives in
+   * DEFAULTS and nowhere else. The previous hand-rolled comparisons (`=== true`,
+   * `!== false`) each baked the default into the operator, so flipping a default in
+   * DEFAULTS silently changed nothing — a fresh install still got the old value.
+   */
+  function bool(value, fallback) {
+    return typeof value === 'boolean' ? value : fallback;
+  }
+
   function oneOf(value, allowed, fallback) {
     return allowed.includes(value) ? value : fallback;
   }
@@ -108,7 +121,7 @@
     return {
       version: SCHEMA_VERSION,
 
-      enabled: raw.enabled !== false,
+      enabled: bool(raw.enabled, DEFAULTS.enabled),
 
       thresholdMode: oneOf(raw.thresholdMode, constants.THRESHOLD_MODES, DEFAULTS.thresholdMode),
 
@@ -124,7 +137,7 @@
 
       style: oneOf(raw.style, constants.STYLES, DEFAULTS.style),
 
-      showOk: raw.showOk === true,
+      showOk: bool(raw.showOk, DEFAULTS.showOk),
 
       pollIntervalMs: clamp(
         Math.round(num(raw.pollIntervalMs, DEFAULTS.pollIntervalMs)),
@@ -142,9 +155,9 @@
 
       disabledOrigins: sanitizeOrigins(raw.disabledOrigins),
 
-      badgeFallback: raw.badgeFallback !== false,
+      badgeFallback: bool(raw.badgeFallback, DEFAULTS.badgeFallback),
 
-      verbose: raw.verbose === true,
+      verbose: bool(raw.verbose, DEFAULTS.verbose),
     };
   }
 
