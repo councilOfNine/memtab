@@ -21,7 +21,13 @@
   # of exact byte sequences: no 'unsafe-inline', no 'self', and no way to load a script
   # from anywhere. Editing a script without rebuilding means the browser refuses to run
   # it, which is the failure mode we want.
-  Content-Security-Policy: default-src 'none'; script-src @script-hashes@; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  # img-src allows data: for one reason: MemTab itself. The extension asserts its
+  # indicator as a data: URL favicon, and Blink runs that through the DOCUMENT's
+  # img-src — so with a bare 'self' this site was CSP-blocking its own product's
+  # headline feature and forcing it into the corner-badge fallback. data: images
+  # cannot execute or exfiltrate; the risky directives (script-src, object-src)
+  # stay locked.
+  Content-Security-Policy: default-src 'none'; script-src @script-hashes@; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 
 # HTML is what changes; let it revalidate rather than go stale in a browser cache.
 /

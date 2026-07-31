@@ -49,6 +49,18 @@ MemTab probes for this once per page and falls back to a small dot in the bottom
 corner of the page. If you don't see the dot either, turn on **"Show a corner badge when
 a site blocks favicon changes"** in the options page. The popup says which case you're in.
 
+On these sites the console shows one violation report:
+
+> Loading the image 'data:image/png;base64,…' violates the following Content Security
+> Policy directive: "img-src 'self'". The action has been blocked.
+
+**That message is the probe, and one per page load is expected.** The page's policy
+cannot be read from a content script, and a preflight image-load probe is exempt from
+page CSP in the isolated world (we tried — see the comment above `confirmIconApplied`
+in `content/content.js`), so the only honest test is to apply the real icon and ask the
+browser whether it stuck. When it didn't, MemTab clears its link and switches to the
+badge; the message does not repeat. If you see it *spamming*, that is a bug — file it.
+
 There is no fix for the favicon itself. The only URL scheme that bypasses page CSP is
 `chrome-extension://`, and that can only serve static files — it cannot carry an icon
 composited from *your* colours and *this site's* favicon.
