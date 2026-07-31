@@ -27,8 +27,8 @@
       'format.js',
       'palette.js',
       'settings.js',
-      'levels.js',
       'measure.js',
+      'levels.js',
       'render.js',
     ],
 

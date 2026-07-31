@@ -11,6 +11,15 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Changed
 
+- **The level and the popup now track the allocated JS heap (`totalJSHeapSize`), not
+  live objects (`usedJSHeapSize`).** This restores what the original prototype
+  shipped; the rewrite drifted to `used` without anyone deciding that. `used` falls at
+  every major garbage collection, so a colour keyed to it flickers on GC cycles rather
+  than tracking real growth — and it undershoots what the tab actually holds from the
+  machine. The choice now lives in one place, `measure.metric()`, which both
+  `levels.classify()` and the popup go through, so the tab colour and the headline
+  number are the same figure by construction. The ratio (and relative-mode
+  percentages) use the same basis.
 - **Healthy tabs now show their indicator by default** (`showOk: true`). With it off, a
   browser full of healthy tabs looked exactly like MemTab not running at all — which
   reads as broken, not quiet. The stoplight on every tab is the product; "only mark

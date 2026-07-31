@@ -23,8 +23,8 @@ importScripts(
   '../shared/format.js',
   '../shared/palette.js',
   '../shared/settings.js',
-  '../shared/levels.js',
   '../shared/measure.js',
+  '../shared/levels.js',
   '../shared/render.js'
 );
 
