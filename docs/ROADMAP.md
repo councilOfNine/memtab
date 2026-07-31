@@ -156,10 +156,10 @@ Do it after Chrome and Edge are live and stable, or not at all.
 ### Done ✅ 🤖
 
 - **Tagged releases** — [`.github/workflows/release.yml`](../.github/workflows/release.yml).
-  Push `v0.1.0` and it verifies the tag matches `package.json`, runs every check, builds
+  Push `v0.1.1` and it verifies the tag matches `package.json`, runs every check, builds
   twice to prove reproducibility, publishes SHA256SUMS, and attaches a **build-provenance
   attestation** so anyone can run
-  `gh attestation verify memtab-0.1.0.zip --repo councilOfNine/memtab`.
+  `gh attestation verify memtab-0.1.1.zip --repo councilOfNine/memtab`.
 - **CI** on Node 22 and 24, plus a headless-Chrome smoke test.
 - **`npm run preflight`** — every mechanical check plus the human to-do list.
 

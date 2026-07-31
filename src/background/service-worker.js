@@ -56,10 +56,20 @@ const inFlight = new Map();
 chrome.runtime.onInstalled.addListener((details) => {
   // Write settings back through sanitize() so an upgrade fills in keys added since
   // the user last saved, and so anything hand-edited gets clamped into range.
-  chrome.storage.sync.get(constants.SETTINGS_KEY).then((stored) => {
-    const migrated = Settings.migrate(stored && stored[constants.SETTINGS_KEY]);
-    chrome.storage.sync.set({ [constants.SETTINGS_KEY]: migrated });
-  });
+  //
+  // The inner set() is returned and the chain has a catch: a floating rejection here
+  // (sync briefly unavailable, a write-quota trip) would land as "Uncaught (in
+  // promise)" in the chrome://extensions error panel on every install and reload —
+  // noise in exactly the place a store reviewer looks. Failing to migrate is fine;
+  // sanitize() runs on every load anyway, so stale stored settings still come out
+  // clamped and complete.
+  chrome.storage.sync
+    .get(constants.SETTINGS_KEY)
+    .then((stored) => {
+      const migrated = Settings.migrate(stored && stored[constants.SETTINGS_KEY]);
+      return chrome.storage.sync.set({ [constants.SETTINGS_KEY]: migrated });
+    })
+    .catch((error) => console.warn('[memtab] settings migration on install failed', error));
 
   if (details.reason === 'install' || details.reason === 'update') {
     backfillOpenTabs();

@@ -93,7 +93,7 @@ Free, and the package needs no changes. Do #2 above first.
 - [ ] **Manual pass on real sites.** The smoke test covers fixtures, not github.com,
       Figma, Google Docs or your bank. A reviewer landing on a page where nothing visibly
       happens is the most likely rejection
-- [ ] Tag the release: `git tag v0.1.0 && git push --tags` — CI builds it, checksums it,
+- [ ] Tag the release: `git tag v0.1.1 && git push --tags` — CI builds it, checksums it,
       and attaches a provenance attestation
 
 ## After launch

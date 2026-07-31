@@ -1,6 +1,6 @@
 {
   "name": "memtab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A Chrome extension that shows each tab's memory usage as a traffic light on its favicon.",
   "license": "MIT",
