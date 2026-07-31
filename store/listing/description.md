@@ -22,7 +22,7 @@ MADE TO FIT HOW YOU WORK
 - Set the warning and high thresholds yourself, in megabytes or as a share of your device's heap limit.
 - Four indicator styles: a ring around the icon, a solid plate behind it, a corner dot, or a bar whose length also encodes the level.
 - Any colours you like. Stoplight by default, with a colour-blind-safe palette one click away, plus monochrome and neon.
-- Healthy tabs are left alone by default, so you only see the indicator when it means something.
+- Every tab shows its level, green included, so you can see at a glance that MemTab is watching. Prefer quiet? One toggle marks only the tabs that need attention.
 - Hysteresis stops a tab sitting on a threshold from flickering.
 - Skip any site entirely, from the settings page or the popup.
 - Settings sync across your Chrome profiles, and export to a file.

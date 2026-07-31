@@ -11,6 +11,22 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Changed
 
+- **Healthy tabs now show their indicator by default** (`showOk: true`). With it off, a
+  browser full of healthy tabs looked exactly like MemTab not running at all — which
+  reads as broken, not quiet. The stoplight on every tab is the product; "only mark
+  trouble" is still one toggle away. Note for anyone who saved settings before this:
+  your stored `showOk: false` wins over the new default — flip **Also mark healthy
+  tabs** in Settings.
+- **The popup labels the reading as the JS heap in the figure itself** ("JS heap · of
+  4.1 GB limit"), and its footnote now says outright that the tab's real memory is
+  several times larger, that Chrome shows that figure in the tab hover card, and that
+  extensions cannot read it. A bare "93 MB" next to Chrome's own "1.2 GB" hover card
+  invited reading MemTab's number as the tab's total memory, which it has never been —
+  the figure Chrome shows there comes from process memory accounting that no
+  stable-channel extension API exposes.
+- An e2e test now covers the install-time backfill: open a page first, install the
+  extension second, and the tab must get its indicator with no reload — on pure default
+  settings, which also pins the new `showOk` default.
 - **The repository moved to the `councilOfNine` organisation.** Every hardcoded
   `itsmiketorres/memtab` URL followed it — docs, workflows, store listing, the options
   page and all three site pages. GitHub redirects the old path, which is exactly why
@@ -90,6 +106,14 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Fixed
 
+- **`sanitize()` ignored `DEFAULTS` for every boolean setting.** Each one baked its
+  default into a hand-rolled comparison — `raw.showOk === true`, `raw.enabled !==
+  false` — so flipping a boolean default in `DEFAULTS` changed nothing: a fresh
+  install still got the old value. Invisible for as long as the operators happened to
+  agree with `DEFAULTS`; the `showOk` flip is what exposed it. Booleans now go through
+  a `bool(value, fallback)` helper like numbers go through `num()`, and the
+  fills-in-defaults test now asserts value equality with `DEFAULTS` rather than mere
+  key presence — the presence-only version is exactly how this shipped.
 - **The CSP fallback never triggered.** MemTab probed for `data:` image support by
   loading one and watching for an error — but a content script's own loads run in the
   isolated world, which Chrome exempts from the page's CSP, so the probe passed on

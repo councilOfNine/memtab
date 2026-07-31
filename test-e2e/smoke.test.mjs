@@ -36,6 +36,12 @@ const TEST_SETTINGS = {
   verbose: true,
 };
 
+/** The href MemTab has applied, or null. Direct children of <head> only, as Chrome does. */
+const ourIcon =
+  `(() => { const els = [...document.head.children]` +
+  `.filter(el => el.tagName === "LINK" && el.hasAttribute("data-memtab-icon"));` +
+  ` return els.length ? els[els.length - 1].href : null; })()`;
+
 // A hard ceiling so a wedged browser fails the job in minutes instead of hanging until
 // the runner's own timeout. Locally the whole suite is well under a minute.
 test(
@@ -71,12 +77,6 @@ test(
   );
 
   const page = await newPage(chrome.browser);
-
-  /** The href MemTab has applied, or null. Direct children of <head> only, as Chrome does. */
-  const ourIcon =
-    `(() => { const els = [...document.head.children]` +
-    `.filter(el => el.tagName === "LINK" && el.hasAttribute("data-memtab-icon"));` +
-    ` return els.length ? els[els.length - 1].href : null; })()`;
 
   await t.test('composites an indicator onto an ordinary page', async () => {
     await page.goto(`${fixtures.origin}/plain.html`);
@@ -188,5 +188,44 @@ test(
     const extensionTargets = targetInfos.filter((target) => target.url.includes(id));
     assert.ok(extensionTargets.length > 0, 'no extension targets at all');
   });
+  }
+);
+
+// The other order: the page exists first, the extension arrives second. That is every
+// user's actual first minute — they install MemTab because of the tabs they already
+// have open, and manifest content scripts only run on navigation, so this path works
+// only if the service worker's install-time backfill injects into open tabs.
+//
+// Runs on pure defaults — no settings are written — so it also pins the shipped
+// defaults: a healthy page must get its green indicator out of the box (showOk: true).
+test(
+  'backfills tabs that were open before install',
+  { skip: chromePath ? false : 'no Chrome installed', timeout: 120000 },
+  async (t) => {
+    const fixtures = await startFixtures();
+    const chrome = await launchChrome({ chromePath });
+
+    t.after(async () => {
+      await chrome.close();
+      await fixtures.close();
+    });
+
+    const page = await newPage(chrome.browser);
+    await page.goto(`${fixtures.origin}/plain.html`);
+
+    // Settle first, so the icon can only have come from the install-time backfill.
+    assert.equal(
+      await page.evaluate(ourIcon),
+      null,
+      'a MemTab icon existed before the extension was installed'
+    );
+
+    await loadExtension(chrome.browser, SRC);
+
+    const href = await waitFor(() => page.evaluate(ourIcon), {
+      timeout: 20000,
+      what: 'the install-time backfill to reach an already-open tab',
+    });
+    assert.ok(href.startsWith('data:image/png;base64,'), `unexpected href: ${href.slice(0, 60)}`);
   }
 );

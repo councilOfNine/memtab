@@ -57,8 +57,9 @@ if the three levels end up too similar to tell apart at 16 px.
 | **Bar** | A bar along the bottom whose **length** also encodes the level — readable with no colour perception at all. |
 
 **Behaviour.** Poll interval (foreground and background), hysteresis so a tab hovering on
-a boundary doesn't flicker, whether to mark healthy tabs at all (off by default — an
-indicator on all forty tabs is just noise), and a per-site skip list.
+a boundary doesn't flicker, whether to mark healthy tabs (on by default, so a green tab
+tells you MemTab is watching — turn it off to only mark tabs that need attention), and a
+per-site skip list.
 
 Settings sync across your Chrome profiles, and can be exported and imported as JSON.
 
