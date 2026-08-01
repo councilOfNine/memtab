@@ -88,6 +88,24 @@ MemTab is a good **leak detector for the tab you're on** — watch a tab walk fr
 red over an afternoon and you've found something. It is a poor tool for triaging which of
 forty background tabs to close; use the Task Manager for that.
 
+### The real number, on Chrome Dev
+
+The figure Chrome's tab hover card shows — the renderer's actual memory footprint — comes
+from `chrome.processes`, which Chromium gates to the **Dev release channel** (stable and
+beta only via an allowlist of Google's own extension IDs, so no store extension can ever
+have it; verified empirically and against `_permission_features.json`). Note this is the
+*release channel* you download, not the "Developer mode" toggle on `chrome://extensions`.
+
+```bash
+npm run build:devchannel
+```
+
+builds `dist/memtab-devchannel/` — same code, plus the `processes` permission. Load it
+unpacked in [Chrome Dev](https://www.google.com/chrome/dev/) and MemTab levels every tab
+on its real process memory, matching the hover card; the popup says which figure it is
+showing. Loaded on stable, the API is absent and the build behaves exactly like the store
+one (that fallback is e2e-tested). The store build never carries the permission.
+
 The reasoning, and why the better APIs aren't usable, is in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#what-memtab-actually-measures).
 

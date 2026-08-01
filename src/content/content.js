@@ -44,6 +44,10 @@
     /** false once we've confirmed the page refuses our favicon — see verifyIconRoute(). */
     canUseDataUrls: null,
     bucketized: false,
+    /** Latest real process memory from the worker (Dev channel), or null. */
+    processReading: null,
+    /** True once the worker says chrome.processes doesn't exist here — stop asking. */
+    processUnavailable: false,
     timer: null,
     reassertTimer: null,
     applying: false,
@@ -459,6 +463,32 @@
     }
   }
 
+  /**
+   * Pull the tab's real process memory from the worker, where `chrome.processes`
+   * exists (Chrome Dev channel only). One poll behind by design: the fetch is async
+   * and the tick is not, so tick N displays the value fetched at tick N-1 — a lag of
+   * one poll interval on a number Chrome itself only refreshes about once a second.
+   *
+   * On every other channel the worker answers `available: false` exactly once and
+   * this never asks again, so the store build sends zero extra messages after the
+   * first tick.
+   */
+  async function refreshProcessReading() {
+    if (state.processUnavailable || !contextAlive()) return;
+    try {
+      const response = await chrome.runtime.sendMessage({ type: MSG.GET_PROCESS_READING });
+      if (response && response.available === false) {
+        state.processUnavailable = true;
+        state.processReading = null;
+        return;
+      }
+      state.processReading =
+        response && Number.isFinite(response.privateMemory) ? response.privateMemory : null;
+    } catch {
+      // Messaging blip or worker mid-restart; keep the last value and try next tick.
+    }
+  }
+
   function tick() {
     if (state.stopped) return;
 
@@ -471,10 +501,16 @@
 
     const reading = measure.read(performance);
     if (!reading) return;
+
+    // The overlay, not a replacement: the heap fields stay on the reading, and
+    // measure.metric() prefers `process` when it is present. Level and popup follow.
+    if (Number.isFinite(state.processReading)) reading.process = state.processReading;
     state.reading = reading;
 
     const level = levels.classify(state.settings, reading, state.level);
     if (level) applyLevel(level);
+
+    refreshProcessReading();
   }
 
   function schedule() {

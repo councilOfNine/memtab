@@ -21,7 +21,19 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
 const DIST = join(ROOT, 'dist');
-const STAGE = join(DIST, 'memtab');
+
+/**
+ * --devchannel builds the Chrome Dev variant: identical bytes except the manifest,
+ * which gains the `processes` permission and a name suffix. Where that API exists,
+ * the service worker levels tabs on real process memory — the tab hover card's
+ * figure. The permission is Dev-channel gated in Chromium (stable/beta only via an
+ * allowlist of Google's own extension IDs), so this variant is never the store
+ * upload; on stable the manifest still loads but the API is undefined and the
+ * extension behaves exactly like the store build. Two targets, one src/.
+ */
+const DEV_CHANNEL = process.argv.includes('--devchannel');
+const TARGET = DEV_CHANNEL ? 'memtab-devchannel' : 'memtab';
+const STAGE = join(DIST, TARGET);
 
 /** Fixed DOS timestamp (1980-01-01) so builds are reproducible. */
 const DOS_TIME = 0;
@@ -33,8 +45,10 @@ const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 // store-asset generator, and wiping the whole directory quietly destroyed images that
 // take a headless browser to regenerate.
 rmSync(STAGE, { recursive: true, force: true });
+// Per-target zip pattern, so building one variant doesn't delete the other's zip.
+const ZIP_PATTERN = DEV_CHANNEL ? /^memtab-devchannel-.*\.zip$/ : /^memtab-\d[\d.]*\.zip$/;
 for (const entry of existsSync(DIST) ? readdirSync(DIST) : []) {
-  if (/^memtab-.*\.zip$/.test(entry)) rmSync(join(DIST, entry), { force: true });
+  if (ZIP_PATTERN.test(entry)) rmSync(join(DIST, entry), { force: true });
 }
 
 mkdirSync(STAGE, { recursive: true });
@@ -54,6 +68,14 @@ if (!/^\d+(\.\d+){0,3}$/.test(pkg.version)) {
 const manifestPath = join(STAGE, 'manifest.json');
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 manifest.version = pkg.version;
+
+if (DEV_CHANNEL) {
+  // The name suffix is what tells the two apart in the toolbar and on
+  // chrome://extensions; the permission is what unlocks chrome.processes on Dev.
+  manifest.name = `${manifest.name} (Dev Channel)`;
+  manifest.permissions = [...manifest.permissions, 'processes'];
+}
+
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 // ── zip ─────────────────────────────────────────────────────────────────────
@@ -139,7 +161,7 @@ end.writeUInt16LE(files.length, 10);
 end.writeUInt32LE(centralBuf.length, 12);
 end.writeUInt32LE(offset, 16);
 
-const zipPath = join(DIST, `memtab-${pkg.version}.zip`);
+const zipPath = join(DIST, `${TARGET}-${pkg.version}.zip`);
 writeFileSync(zipPath, Buffer.concat([...locals, centralBuf, end]));
 
 const bytes = statSync(zipPath).size;

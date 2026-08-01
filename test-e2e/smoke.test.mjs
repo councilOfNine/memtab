@@ -15,6 +15,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -231,6 +232,41 @@ test(
     const href = await waitFor(() => page.evaluate(ourIcon), {
       timeout: 20000,
       what: 'the install-time backfill to reach an already-open tab',
+    });
+    assert.ok(href.startsWith('data:image/png;base64,'), `unexpected href: ${href.slice(0, 60)}`);
+  }
+);
+
+// The Dev-channel build target adds the `processes` permission to the manifest. On
+// stable Chrome that permission parses but the API behind it is undefined (verified
+// against Chromium's _permission_features.json: channel "dev", stable only via a
+// Google-internal allowlist) — so the variant must load and behave exactly like the
+// store build here, falling back to the JS heap. This is the test that keeps the
+// dev build from ever being the broken build.
+test(
+  'the dev-channel build degrades gracefully on stable Chrome',
+  { skip: chromePath ? false : 'no Chrome installed', timeout: 120000 },
+  async (t) => {
+    execSync('node scripts/build.mjs --devchannel', { cwd: join(SRC, '..'), stdio: 'pipe' });
+    const DEV_BUILD = join(SRC, '..', 'dist', 'memtab-devchannel');
+
+    const fixtures = await startFixtures();
+    const chrome = await launchChrome({ chromePath });
+
+    t.after(async () => {
+      await chrome.close();
+      await fixtures.close();
+    });
+
+    const id = await loadExtension(chrome.browser, DEV_BUILD);
+    assert.match(id, /^[a-p]{32}$/, `dev-channel build failed to load: ${id}`);
+
+    const page = await newPage(chrome.browser);
+    await page.goto(`${fixtures.origin}/plain.html`);
+
+    const href = await waitFor(() => page.evaluate(ourIcon), {
+      timeout: 20000,
+      what: 'the dev-channel build to fall back to heap readings and paint',
     });
     assert.ok(href.startsWith('data:image/png;base64,'), `unexpected href: ${href.slice(0, 60)}`);
   }

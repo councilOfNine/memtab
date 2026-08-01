@@ -234,3 +234,61 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   return true; // keep the message channel open for the async response
 });
+
+// --- real process memory (Chrome Dev channel only) --------------------------
+
+/**
+ * Where `chrome.processes` exists, level tabs on the renderer's ACTUAL private
+ * memory footprint — the figure Chrome's own tab hover card shows — instead of the
+ * JS heap, which is a strict subset of it.
+ *
+ * That API is Dev-channel only, and this is the exact shape of the gate: in
+ * Chromium's _permission_features.json the "processes" permission is channel "dev",
+ * with stable/beta granted only to an allowlist of Google's own extension IDs.
+ * Verified empirically on stable Chrome 150: a manifest requesting the permission
+ * LOADS without complaint, but `chrome.processes` is simply undefined behind it —
+ * which is why the original prototype looked fine on stable and silently never
+ * fired. So: feature-detect, never assume, and the store build loses nothing.
+ *
+ * The listener is registered once at the top level (an MV3 requirement, and the
+ * prototype's leak was registering it inside a per-tab function). Each event
+ * carries the full process list, so the map is rebuilt per event and cannot grow
+ * stale entries for closed tabs.
+ */
+const processReadings = new Map(); // tabId -> { privateMemory, at }
+const PROCESSES_AVAILABLE =
+  typeof chrome.processes !== 'undefined' && !!chrome.processes.onUpdatedWithMemory;
+
+if (PROCESSES_AVAILABLE) {
+  chrome.processes.onUpdatedWithMemory.addListener((processes) => {
+    const at = Date.now();
+    processReadings.clear();
+    for (const process of Object.values(processes)) {
+      if (process.type !== 'renderer' || !Number.isFinite(process.privateMemory)) continue;
+      for (const task of process.tasks || []) {
+        if (Number.isFinite(task.tabId) && task.tabId >= 0) {
+          processReadings.set(task.tabId, { privateMemory: process.privateMemory, at });
+        }
+      }
+    }
+  });
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || message.type !== constants.MSG.GET_PROCESS_READING) return undefined;
+
+  // Tab identity comes from the sender, which Chrome populates — never the message.
+  const tabId = sender && sender.tab && sender.tab.id;
+  if (!PROCESSES_AVAILABLE || !Number.isFinite(tabId)) {
+    sendResponse({ available: false, privateMemory: null });
+    return undefined;
+  }
+
+  // Events fire about once a second while the worker is awake. A stale entry means
+  // the worker just woke up (this very message did it) and hasn't heard an event
+  // yet — answer null now, and the next poll gets real data.
+  const entry = processReadings.get(tabId);
+  const fresh = entry && Date.now() - entry.at < 10000;
+  sendResponse({ available: true, privateMemory: fresh ? entry.privateMemory : null });
+  return undefined;
+});

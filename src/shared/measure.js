@@ -62,9 +62,15 @@
    * Everything that turns a reading into a level or a headline number must go
    * through here — levels.classify() and the popup both do. Falls back to `used`
    * for a reading that lacks `total` (older stored data, hand-built fixtures).
+   *
+   * When the reading carries `process` — the renderer's private memory footprint,
+   * available only where `chrome.processes` exists (Chrome Dev channel) — that wins
+   * outright. It is the figure Chrome's own tab hover card shows, and the heap is a
+   * strict subset of it.
    */
   function metric(reading) {
     if (!reading) return NaN;
+    if (Number.isFinite(reading.process)) return reading.process;
     return Number.isFinite(reading.total) ? reading.total : reading.used;
   }
 
