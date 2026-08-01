@@ -37,6 +37,14 @@ test('metric() is the allocated heap, falling back to used', () => {
   assert.ok(Number.isNaN(measure.metric(null)));
 });
 
+test('metric() prefers real process memory when a reading carries it', () => {
+  // On Chrome Dev, chrome.processes supplies the renderer's private footprint — the
+  // tab hover card's figure — and it beats both heap numbers outright.
+  assert.equal(measure.metric({ used: 500, total: 800, process: 4800 }), 4800);
+  // A non-finite process value must not shadow the heap fallback.
+  assert.equal(measure.metric({ used: 500, total: 800, process: NaN }), 800);
+});
+
 test('a zero or missing heap limit yields no ratio rather than Infinity', () => {
   const zero = measure.read(perf({ usedJSHeapSize: 500, totalJSHeapSize: 800, jsHeapSizeLimit: 0 }), 0);
   assert.ok(Number.isNaN(zero.ratio));

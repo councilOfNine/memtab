@@ -9,7 +9,24 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **Real process memory on Chrome Dev** (`npm run build:devchannel`). Where
+  `chrome.processes` exists, the service worker levels every tab on the renderer's
+  actual private memory footprint — the figure Chrome's tab hover card shows — and
+  the popup labels it as such. The API is Dev-channel gated in Chromium
+  (`_permission_features.json`: stable/beta only via an allowlist of Google's own
+  extension IDs), so this lives in a second build target whose manifest adds the
+  `processes` permission; the store build never carries it. Loaded on stable, the
+  permission parses but the API is `undefined` — verified empirically on Chrome 150,
+  which is also why the original prototype looked fine on stable while silently never
+  firing — and the build falls back to heap readings, behaving exactly like the store
+  build. That degrade path is e2e-tested on stable CI.
+- The choice of figure stays in one place: `measure.metric()` prefers `process` over
+  `total` over `used`, so the tab colour and the popup headline can never disagree
+  about which number MemTab is on.
+- The optional-API lint guard now strips comments before scanning, so prose may name
+  `chrome.processes` while only code that touches it must carry the `typeof` guard.
 
 ## [0.1.1] — 2026-07-31
 

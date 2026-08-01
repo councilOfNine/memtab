@@ -72,6 +72,12 @@
       GET_READING: 'memtab:get-reading',
       /** Asks the worker what favicon Chrome currently shows for the calling tab. */
       GET_TAB_ICON: 'memtab:get-tab-icon',
+      /**
+       * Asks the worker for the calling tab's real process memory, which only exists
+       * where `chrome.processes` does (Chrome Dev channel). Elsewhere the worker
+       * answers `available: false` once and the content script stops asking.
+       */
+      GET_PROCESS_READING: 'memtab:get-process-reading',
     },
 
     /** 1x1 transparent PNG, used to probe whether a page's CSP allows data: images. */

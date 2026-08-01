@@ -19,6 +19,7 @@
     "test": "node --test 'test/**/*.test.js'",
     "lint": "node scripts/lint.mjs",
     "build": "node scripts/build.mjs",
+    "build:devchannel": "node scripts/build.mjs --devchannel",
     "build:site": "node scripts/build-site.mjs",
     "deploy:site": "npm run build:site && npx wrangler@latest deploy",
     "verify:deploy": "node scripts/verify-deploy.mjs https://memtab.fixit.works/",

@@ -86,16 +86,21 @@
       : LEVEL_LABEL[level];
 
     // measure.metric(), not reading.used: the headline must be the same figure the
-    // tab colour is keyed to — the allocated heap. Showing one number and colouring
-    // by another is exactly the drift this popup once had.
+    // tab colour is keyed to. Showing one number and colouring by another is exactly
+    // the drift this popup once had.
     const value = measure.metric(reading);
+    const isProcess = Number.isFinite(reading.process);
     $('used').textContent = format.bytes(value);
-    // "JS heap" sits in the label, not a footnote: the headline number is several
-    // times smaller than the figure Chrome shows in the tab hover card, and a bare
-    // "93 MB" invites reading it as the tab's total memory, which it is not.
-    $('ratio').textContent = Number.isFinite(reading.ratio)
-      ? `JS heap · of ${format.bytes(reading.limit)} limit (${format.percent(reading.ratio)})`
-      : '';
+    // The label names which figure this is. "JS heap" is several times smaller than
+    // the figure Chrome shows in the tab hover card, and a bare "93 MB" invites
+    // reading it as the tab's total memory. On Dev channel, where chrome.processes
+    // exists, it IS the hover-card figure — and pairing it with the JS heap limit
+    // would be apples to oranges, so the percent is heap-only.
+    $('ratio').textContent = isProcess
+      ? 'process memory · the figure Chrome shows when you hover the tab'
+      : Number.isFinite(reading.ratio)
+        ? `JS heap · of ${format.bytes(reading.limit)} limit (${format.percent(reading.ratio)})`
+        : '';
 
     // The meter runs from zero to whichever is larger: the heap limit, or a little
     // past the high threshold — so the thresholds are always visible on it.
@@ -189,7 +194,11 @@
     if (info.stale && info.hidden) {
       note('This tab has been in the background, where timers are slowed to about one per minute. The reading may be old.');
     }
-    note('This is the JavaScript heap for the renderer serving this site — shared with other tabs on the same site. The tab’s real memory is several times larger: Chrome shows it when you hover the tab, but doesn’t let extensions read that figure.');
+    if (Number.isFinite(info.reading && info.reading.process)) {
+      note('This is the renderer process’s real memory footprint, from Chrome’s own process accounting — the same figure as the tab hover card. Tabs on the same site share one process, and one reading.');
+    } else {
+      note('This is the JavaScript heap for the renderer serving this site — shared with other tabs on the same site. The tab’s real memory is several times larger: Chrome shows it when you hover the tab, but doesn’t let extensions read that figure.');
+    }
 
     wireFooter(settings, origin);
   }

@@ -310,13 +310,19 @@ function siteCsp() {
 
 function guardedOptionalApis() {
   const check = 'optional API guards';
-  // chrome.processes is Dev-channel only. A bare top-level reference throws a
-  // TypeError on stable and aborts service-worker startup entirely.
+  // chrome.processes exists only on the Dev channel — on stable the permission
+  // parses but the API object is undefined, so a bare reference throws a TypeError
+  // and aborts service-worker startup entirely.
+  //
+  // Comments are stripped first: prose is allowed to *name* the API (the comments
+  // explaining this very rule have to), only code may *touch* it.
   for (const file of walk(SRC)) {
     if (!file.endsWith('.js')) continue;
-    const source = readFileSync(file, 'utf8');
-    if (!source.includes('chrome.processes')) continue;
-    if (!source.includes("typeof chrome.processes !== 'undefined'")) {
+    const code = readFileSync(file, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    if (!code.includes('chrome.processes')) continue;
+    if (!code.includes("typeof chrome.processes !== 'undefined'")) {
       fail(check, `${relative(ROOT, file)} touches chrome.processes without a typeof guard`);
     }
   }
