@@ -60,6 +60,10 @@ jobs:
     needs: check
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the sitemap derives each page's <lastmod> from the commit
+          # that last touched its sources, and a shallow clone has no such commits.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
