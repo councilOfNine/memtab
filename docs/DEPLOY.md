@@ -41,6 +41,32 @@ rule changing three custom properties rather than 24 redrawn images.
 `index.html`, and the generated rules at `/*@generated-pickers*/` in `styles.css`. It
 fails the build if a marker is missing, or if any `.js` file reaches `dist/site/`.
 
+## The sitemap is generated, not maintained
+
+`site/sitemap.xml` does not exist on purpose. `scripts/build-site.mjs` builds it from the
+pages themselves, and `npm run lint` fails if a checked-in copy reappears.
+
+**A page's URL is its own `<link rel="canonical">.`** Keeping a separate list would be two
+places that can disagree, and a sitemap that contradicts a canonical tag hands search
+engines two different answers for one page. Pages marked `noindex` (404.html) are skipped;
+a page that is neither noindex nor canonical **fails the build**, because guessing its URL
+would be worse than stopping. Adding a page adds it to the sitemap — there is no second
+list to forget.
+
+**`lastmod` comes from git, never the build clock.** For each page it is the date of the
+most recent commit touching that page's sources — its markup, the stylesheet, and for
+`index.html` the renderer that generates its indicator symbols at build time. This
+matters more than it looks: Google uses `lastmod` only while it stays verifiably accurate
+and discounts it otherwise, so stamping every page with "now" on every deploy — including
+the many deploys that change nothing on a given page — is worse than shipping no
+`lastmod` at all.
+
+That is also why both `actions/checkout` steps that build the site set `fetch-depth: 0`.
+The default shallow clone has no history to date pages from, and the build says so rather
+than inventing one.
+
+**`changefreq` and `priority` are deliberately absent.** Google ignores both.
+
 ## Compression
 
 **There is nothing to configure.** Cloudflare negotiates Brotli (or gzip) per request

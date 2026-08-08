@@ -11,6 +11,25 @@ manifest, and `npm run lint` fails if the two disagree.
 
 ### Added
 
+- **The sitemap is generated from the pages themselves.** Each URL is that page's own
+  `<link rel="canonical">`, so the sitemap can never contradict a canonical tag, and
+  adding a page adds it to the sitemap. `noindex` pages are skipped; an indexable page
+  with no canonical fails the build rather than having a URL guessed for it. `lastmod`
+  is the git commit date of the sources that compose each page — Google uses `lastmod`
+  only while it stays accurate and discounts it otherwise, so the build clock would be
+  worse than nothing. `changefreq` and `priority` are omitted because Google ignores
+  them. Lint fails if a hand-maintained `site/sitemap.xml` reappears, if robots.txt
+  stops advertising it, or if two pages claim the same canonical.
+- **Footer attribution** to the parent site, [FixIT Works](https://fixit.works), on all
+  three pages.
+
+### Fixed
+
+- **The 404 page's images were all broken.** It referenced `icons/icon-32.png` and
+  `icons/icon-48.png`, but the site build copies icons to the root and ships no `icons/`
+  directory — so the favicon, the header mark and the footer mark were three broken
+  references on the one page users only reach by accident.
+
 - **Real process memory on Chrome Dev** (`npm run build:devchannel`). Where
   `chrome.processes` exists, the service worker levels every tab on the renderer's
   actual private memory footprint — the figure Chrome's tab hover card shows — and

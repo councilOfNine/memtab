@@ -43,6 +43,10 @@ jobs:
       url: https://memtab.fixit.works
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the sitemap derives each page's <lastmod> from the commit
+          # that last touched its sources, and a shallow clone has no such commits.
+          fetch-depth: 0
 
       # Deliberately not a silent skip. A deploy pipeline that quietly does nothing when
       # it is misconfigured is worse than one that fails, because master and the live

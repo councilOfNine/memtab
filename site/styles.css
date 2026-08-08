@@ -831,6 +831,27 @@ h1 {
   color: var(--text);
 }
 
+/*
+ * Attribution to the parent site. Sits inside the brand block so it stays attached to
+ * the product name when the footer wraps on narrow screens, rather than becoming a
+ * third free-floating item that `justify-content: space-between` would strand.
+ */
+.footer__by {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.footer__by a {
+  color: var(--text-dim);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.footer__by a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .footer__links {
   display: flex;
   flex-wrap: wrap;
